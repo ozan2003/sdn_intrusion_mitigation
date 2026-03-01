@@ -28,7 +28,7 @@ dev = [
 [tool.ruff]
 line-length = 79
 target-version = "py312"
-#src = [""]
+src = ["src"]
 
 [tool.ruff.lint]
 select = [
