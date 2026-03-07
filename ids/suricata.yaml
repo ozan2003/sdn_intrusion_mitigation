@@ -1,0 +1,72 @@
+%YAML 1.1
+---
+
+vars:
+  address-groups:
+    HOME_NET: "[10.0.0.0/8]"
+    EXTERNAL_NET: "!$HOME_NET"
+    HTTP_SERVERS: "$HOME_NET"
+    DNS_SERVERS: "$HOME_NET"
+  port-groups:
+    HTTP_PORTS: "80"
+    SSH_PORTS: "22"
+    DNS_PORTS: "53"
+
+default-rule-path: /var/lib/suricata/rules
+rule-files:
+  - suricata.rules
+
+# Project-specific rules appended to the search path.
+# start.sh passes the absolute path via --set default-rule-path or
+# suricata loads from the path below.
+include-files:
+  - ids/rules/custom.rules
+
+stats:
+  enabled: yes
+  interval: 30
+
+outputs:
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: eve.json
+      types:
+        - alert:
+            tagged-packets: yes
+            metadata: yes
+        - stats:
+            totals: yes
+            threads: no
+
+  - fast:
+      enabled: yes
+      filename: fast.log
+
+af-packet:
+  - interface: mirror0
+    cluster-id: 99
+    cluster-type: cluster_flow
+    defrag: yes
+    use-mmap: yes
+    ring-size: 2048
+
+app-layer:
+  protocols:
+    http:
+      enabled: yes
+    tls:
+      enabled: yes
+    dns:
+      enabled: yes
+    ssh:
+      enabled: yes
+
+logging:
+  default-log-level: info
+  outputs:
+    - console:
+        enabled: yes
+    - file:
+        enabled: yes
+        filename: suricata.log
