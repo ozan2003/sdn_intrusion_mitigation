@@ -106,12 +106,14 @@ def _build_parser() -> argparse.ArgumentParser:
     flood = sub.add_parser("syn-flood", help="TCP SYN flood attack")
     flood.add_argument("target", help="Target IPv4 address")
     flood.add_argument(
+        "-d",
         "--duration",
         type=int,
         default=DEFAULT_SYN_FLOOD_DURATION,
         help="Flood duration in seconds (default: %(default)s)",
     )
     flood.add_argument(
+        "-p",
         "--pps",
         type=int,
         default=DEFAULT_SYN_FLOOD_PPS,
@@ -121,12 +123,14 @@ def _build_parser() -> argparse.ArgumentParser:
     scan = sub.add_parser("port-scan", help="TCP SYN port scan")
     scan.add_argument("target", help="Target IPv4 address")
     scan.add_argument(
+        "-s",
         "--start-port",
         type=int,
         default=DEFAULT_SCAN_PORT_START,
         help="First port to scan (default: %(default)s)",
     )
     scan.add_argument(
+        "-e",
         "--end-port",
         type=int,
         default=DEFAULT_SCAN_PORT_END,
