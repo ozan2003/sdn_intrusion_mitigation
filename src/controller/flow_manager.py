@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from ipaddress import IPv4Address
 from typing import TYPE_CHECKING
 
 from ryu.ofproto import ofproto_v1_3 as ofproto13
@@ -21,7 +22,7 @@ class FlowManager:
     """Install / remove drop and rate-limit rules on a datapath."""
 
     def __init__(self) -> None:
-        self._meter_ids: dict[int, dict[str, int]] = {}
+        self._meter_ids: dict[int, dict[IPv4Address, int]] = {}
         self._next_meter_id: int = 1
 
     def add_flow(
@@ -50,7 +51,7 @@ class FlowManager:
     def install_drop_rule(
         self,
         datapath: Datapath,
-        src_ip: str,
+        src_ip: IPv4Address,
         *,
         hard_timeout: int = DEFAULT_HARD_TIMEOUT,
         vlan_vid: int | None = None,
@@ -90,7 +91,7 @@ class FlowManager:
     def install_rate_limit(
         self,
         datapath: Datapath,
-        src_ip: str,
+        src_ip: IPv4Address,
         *,
         rate_kbps: int = 512,
         hard_timeout: int = DEFAULT_HARD_TIMEOUT,
@@ -156,7 +157,7 @@ class FlowManager:
     def remove_mitigation(
         self,
         datapath: Datapath,
-        src_ip: str,
+        src_ip: IPv4Address,
         *,
         vlan_vid: int | None = None,
     ) -> None:
@@ -199,8 +200,10 @@ class FlowManager:
             src_ip,
         )
 
-    def _allocate_meter_id(self, dpid: int, src_ip: str) -> int:
-        dp_meters = self._meter_ids.setdefault(dpid, {})
+    def _allocate_meter_id(self, dpid: int, src_ip: IPv4Address) -> int:
+        dp_meters: dict[IPv4Address, int] = self._meter_ids.setdefault(
+            dpid, {}
+        )
         if src_ip in dp_meters:
             return dp_meters[src_ip]
         mid = self._next_meter_id
@@ -208,6 +211,6 @@ class FlowManager:
         dp_meters[src_ip] = mid
         return mid
 
-    def _release_meter_id(self, dpid: int, src_ip: str) -> int | None:
+    def _release_meter_id(self, dpid: int, src_ip: IPv4Address) -> int | None:
         dp_meters = self._meter_ids.get(dpid, {})
         return dp_meters.pop(src_ip, None)

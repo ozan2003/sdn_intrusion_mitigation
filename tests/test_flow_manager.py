@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ipaddress import IPv4Address
 from unittest.mock import MagicMock
 
 from ryu.ofproto import ofproto_v1_3 as ofproto13
@@ -27,7 +28,7 @@ class TestInstallDropRule:
         dp = _make_datapath()
         fm = FlowManager()
 
-        fm.install_drop_rule(dp, "10.0.1.10")
+        fm.install_drop_rule(dp, IPv4Address("10.0.1.10"))
 
         dp.send_msg.assert_called_once()
         msg = dp.send_msg.call_args[0][0]
@@ -40,7 +41,7 @@ class TestInstallDropRule:
         dp = _make_datapath()
         fm = FlowManager()
 
-        fm.install_drop_rule(dp, "10.0.1.10", vlan_vid=15)
+        fm.install_drop_rule(dp, IPv4Address("10.0.1.10"), vlan_vid=15)
 
         msg = dp.send_msg.call_args[0][0]
         match_dict = dict(msg.match._fields2)
@@ -54,7 +55,7 @@ class TestInstallRateLimit:
         dp = _make_datapath()
         fm = FlowManager()
 
-        fm.install_rate_limit(dp, "10.0.1.10", rate_kbps=256)
+        fm.install_rate_limit(dp, IPv4Address("10.0.1.10"), rate_kbps=256)
 
         assert dp.send_msg.call_count == 2
         meter_msg = dp.send_msg.call_args_list[0][0][0]
@@ -71,11 +72,11 @@ class TestInstallRateLimit:
         dp = _make_datapath()
         fm = FlowManager()
 
-        fm.install_rate_limit(dp, "10.0.1.10")
+        fm.install_rate_limit(dp, IPv4Address("10.0.1.10"))
         first_meter = dp.send_msg.call_args_list[0][0][0]
 
         dp.reset_mock()
-        fm.install_rate_limit(dp, "10.0.1.10")
+        fm.install_rate_limit(dp, IPv4Address("10.0.1.10"))
         second_meter = dp.send_msg.call_args_list[0][0][0]
 
         assert first_meter.meter_id == second_meter.meter_id
@@ -86,10 +87,10 @@ class TestRemoveMitigation:
         dp = _make_datapath()
         fm = FlowManager()
 
-        fm.install_rate_limit(dp, "10.0.1.10")
+        fm.install_rate_limit(dp, IPv4Address("10.0.1.10"))
         dp.reset_mock()
 
-        fm.remove_mitigation(dp, "10.0.1.10")
+        fm.remove_mitigation(dp, IPv4Address("10.0.1.10"))
 
         assert dp.send_msg.call_count == 2
         flow_del = dp.send_msg.call_args_list[0][0][0]
@@ -105,10 +106,10 @@ class TestRemoveMitigation:
         dp = _make_datapath()
         fm = FlowManager()
 
-        fm.install_drop_rule(dp, "10.0.1.10")
+        fm.install_drop_rule(dp, IPv4Address("10.0.1.10"))
         dp.reset_mock()
 
-        fm.remove_mitigation(dp, "10.0.1.10")
+        fm.remove_mitigation(dp, IPv4Address("10.0.1.10"))
 
         assert dp.send_msg.call_count == 1
         msg = dp.send_msg.call_args[0][0]

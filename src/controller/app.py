@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from ipaddress import IPv4Address
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
@@ -53,7 +54,7 @@ class ThreatMitigationApp(app_manager.RyuApp):
         self.datapaths: dict[int, Datapath] = {}
         self.flow_manager = FlowManager()
         self.alert_parser = AlertParser(EVE_JSON_PATH)
-        self._mitigated: set[str] = set()
+        self._mitigated: set[IPv4Address] = set()
         self._alert_thread = HUB_SPAWN(self._watch_alerts)
 
     @set_ev_cls(EVENT_SWITCH_FEATURES, CONFIG_DISPATCHER)

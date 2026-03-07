@@ -6,6 +6,7 @@ import json
 import logging
 from dataclasses import dataclass
 from enum import Enum
+from ipaddress import IPv4Address
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -39,8 +40,8 @@ _SID_ACTION_MAP: dict[int, MitigationAction] = {
 class Alert:
     """Structured representation of a Suricata alert."""
 
-    src_ip: str
-    dst_ip: str
+    src_ip: IPv4Address
+    dst_ip: IPv4Address
     src_port: int
     dst_port: int
     proto: str
