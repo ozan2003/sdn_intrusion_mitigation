@@ -19,6 +19,7 @@ OMURGA_DPID = "0000000000000001"
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SURICATA_CFG = PROJECT_ROOT / "ids" / "suricata.yaml"
+SURICATA_RULES = PROJECT_ROOT / "ids" / "rules" / "custom.rules"
 LOG_DIR = PROJECT_ROOT / "logs"
 
 
@@ -133,8 +134,12 @@ def setup_mirror_and_vlans(net: Mininet) -> None:
 def start_suricata() -> None:
     """Launch Suricata in daemon mode on the mirror0 interface."""
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+    if not SURICATA_RULES.exists():
+        msg = f"Suricata rule file not found: {SURICATA_RULES}"
+        raise FileNotFoundError(msg)
     _run(
         f"suricata -c {SURICATA_CFG} -i mirror0 -D -l {LOG_DIR} "
+        f"-S {SURICATA_RULES} "
         "--pidfile /var/run/suricata.pid"
     )
     print(f"[topology] Suricata started on mirror0 (log dir: {LOG_DIR})")

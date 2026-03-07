@@ -12,15 +12,9 @@ vars:
     SSH_PORTS: "22"
     DNS_PORTS: "53"
 
-default-rule-path: /var/lib/suricata/rules
+default-rule-path: ids/rules
 rule-files:
-  - suricata.rules
-
-# Project-specific rules appended to the search path.
-# start.sh passes the absolute path via --set default-rule-path or
-# suricata loads from the path below.
-include-files:
-  - ids/rules/custom.rules
+  - custom.rules
 
 stats:
   enabled: yes
