@@ -14,10 +14,16 @@ dependencies = [
     "six>=1.17.0",
     "tinyrpc>=1.1.7",
     "webob>=1.8.9",
+    # attack simulation
+    "scapy>=2.6",
+    "mininet>=2.3.0.dev6",
 ]
 
 [tool.uv.sources]
 ryu = { git = "https://github.com/MalachiteN/ryu-python-3.12.git" }
+
+[tool.ty.environment]
+extra-paths = ["/home/ozan/.local/lib/python3.12/site-packages"]
 
 [dependency-groups]
 dev = [
