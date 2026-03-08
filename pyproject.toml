@@ -5,6 +5,7 @@ description = "Automated SDN threat mitigation using Suricata and OpenFlow rule 
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "mininet>=2.3.0.dev6",
     "ryu",
     # ryu's dependencies
     "eventlet>=0.40.4",
@@ -14,9 +15,7 @@ dependencies = [
     "six>=1.17.0",
     "tinyrpc>=1.1.7",
     "webob>=1.8.9",
-    # attack simulation
-    "scapy>=2.6",
-    "mininet>=2.3.0.dev6",
+    "scapy>=2.6",          # attack simulation
 ]
 
 [tool.uv.sources]
@@ -26,11 +25,7 @@ ryu = { git = "https://github.com/MalachiteN/ryu-python-3.12.git" }
 extra-paths = ["/home/ozan/.local/lib/python3.12/site-packages"]
 
 [dependency-groups]
-dev = [
-    "pytest>=9.0.2",
-    "ruff>=0.15.4",
-    "ty>=0.0.19",
-]
+dev = ["pytest>=9.0.2", "ruff>=0.15.4", "ty>=0.0.19"]
 
 [tool.ruff]
 line-length = 79
