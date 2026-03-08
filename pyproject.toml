@@ -27,6 +27,7 @@ extra-paths = ["/home/ozan/.local/lib/python3.12/site-packages"]
 
 [dependency-groups]
 dev = [
+    "pytest>=9.0.2",
     "ruff>=0.15.4",
     "ty>=0.0.19",
 ]
@@ -34,7 +35,7 @@ dev = [
 [tool.ruff]
 line-length = 79
 target-version = "py312"
-src = ["src"]
+src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = [
@@ -78,3 +79,17 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "ANN", "D101", "D102", "D103"]
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = ["--strict-markers", "--strict-config", "-ra"]
+xfail_strict = true
+markers = [
+    "unit: fast isolated tests",
+    "integration: tests that combine multiple components",
+    "slow: tests that take noticeably longer to run",
+]
