@@ -12,6 +12,7 @@ export PYTHONPATH="$PROJECT_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 RYU_PID=""
 SURICATA_PID_FILE="/var/run/suricata.pid"
 
+# Stopping of suricata process is handled by bash not Python
 kill_suricata() {
     if [[ -f "$SURICATA_PID_FILE" ]]; then
         local suricata_pid

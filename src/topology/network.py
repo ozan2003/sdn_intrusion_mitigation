@@ -18,6 +18,7 @@ from mininet.topo import Topo
 
 OMURGA_DPID = "0000000000000001"
 
+# Various paths for the project.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SURICATA_CFG = PROJECT_ROOT / "ids" / "suricata.yaml"
 SURICATA_RULES = PROJECT_ROOT / "ids" / "rules" / "custom.rules"
@@ -75,12 +76,13 @@ class EnterpriseWanTopo(Topo):
 
 def _run(cmd: str) -> str:
     """Run a shell command and return stripped stdout."""
-    return subprocess.check_output(  # noqa: S602
-        cmd, shell=True, text=True
+    return subprocess.check_output(  # noqa: S603
+        cmd.split(), text=True
     ).strip()
 
 
 def _get_ofport(interface: str) -> str:
+    """Get the ofport of an interface."""
     return _run(f"ovs-vsctl get Interface {interface} ofport")
 
 
@@ -133,29 +135,21 @@ def setup_mirror_and_vlans(net: Mininet) -> None:
 
 
 def start_suricata() -> None:
-    """Launch Suricata in daemon mode on the mirror0 interface."""
+    """Launch Suricata in daemon mode on the mirror0 interface.
+
+    Stopping of suricata process is handled by start.sh script.
+    """
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     if not SURICATA_RULES.exists():
         msg = f"Suricata rule file not found: {SURICATA_RULES}"
         raise FileNotFoundError(msg)
+
     _run(
         f"suricata -c {SURICATA_CFG} -i mirror0 -D -l {LOG_DIR} "
         f"-S {SURICATA_RULES} "
         "--pidfile /var/run/suricata.pid"
     )
     print(f"[topology] Suricata started on mirror0 (log dir: {LOG_DIR})")
-
-
-def stop_suricata() -> None:
-    """Stop Suricata started with a pidfile, ignoring stale state."""
-    pid_path = Path("/var/run/suricata.pid")
-    if pid_path.exists():
-        pid_value = pid_path.read_text(encoding="utf-8").strip()
-        if pid_value:
-            _run(f"kill {pid_value} 2>/dev/null || true")
-    _run("pkill -x suricata 2>/dev/null || true")
-    if pid_path.exists():
-        pid_path.unlink()
 
 
 def main() -> None:
@@ -175,7 +169,6 @@ def main() -> None:
 
     CLI(net)
 
-    stop_suricata()
     net.stop()
 
 
