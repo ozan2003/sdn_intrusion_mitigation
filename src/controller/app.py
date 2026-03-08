@@ -1,4 +1,4 @@
-"""Ryu SDN controller: VLAN-aware L2 learning + Suricata alert mitigation."""
+"""Ryu SDN controller with VLAN-aware L2 learning and Suricata alert mitigation."""
 
 from __future__ import annotations
 
@@ -32,6 +32,7 @@ LOG = logging.getLogger(__name__)
 OMURGA_DPID = 1
 EVE_JSON_PATH = Path("logs/eve.json")
 
+# VLAN IDs for the different zones.
 VLAN_INTERNET = 15
 VLAN_BRANCH = 5
 VLAN_HQ = 10

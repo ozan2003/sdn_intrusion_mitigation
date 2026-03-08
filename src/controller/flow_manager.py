@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from ipaddress import IPv4Address
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ryu.ofproto import ofproto_v1_3 as ofproto13
 from ryu.ofproto import ofproto_v1_3_parser as parser13
@@ -36,7 +36,7 @@ class FlowManager:
         hard_timeout: int = 0,
         table_id: int = 0,
     ) -> None:
-        """Send a generic OFPFlowMod ADD to *datapath*."""
+        """Sends a generic `OFPFlowMod` ADD to *datapath*."""
         mod = parser13.OFPFlowMod(
             datapath=datapath,
             priority=priority,
@@ -56,7 +56,7 @@ class FlowManager:
         hard_timeout: int = DEFAULT_HARD_TIMEOUT,
         vlan_vid: int | None = None,
     ) -> None:
-        """Install a high-priority flow that drops all traffic from *src_ip*.
+        """Installs a high-priority flow that drops all traffic from *src_ip*.
 
         Args:
             datapath: Target OVS datapath.
@@ -64,7 +64,7 @@ class FlowManager:
             hard_timeout: Seconds before the rule auto-expires.
             vlan_vid: Optional VLAN to scope the rule to a specific zone.
         """
-        match_fields: dict = {
+        match_fields: dict[str, Any] = {
             "eth_type": 0x0800,
             "ipv4_src": src_ip,
         }
@@ -97,7 +97,7 @@ class FlowManager:
         hard_timeout: int = DEFAULT_HARD_TIMEOUT,
         vlan_vid: int | None = None,
     ) -> None:
-        """Rate-limit traffic from *src_ip* using an OpenFlow meter.
+        """Rate-limits traffic from *src_ip* using an OpenFlow meter.
 
         Creates a meter with a DROP band at *rate_kbps*, then installs a
         flow that sends matching packets through that meter before
@@ -124,7 +124,7 @@ class FlowManager:
         )
         datapath.send_msg(meter_mod)
 
-        match_fields: dict = {
+        match_fields: dict[str, Any] = {
             "eth_type": 0x0800,
             "ipv4_src": src_ip,
         }
@@ -161,8 +161,8 @@ class FlowManager:
         *,
         vlan_vid: int | None = None,
     ) -> None:
-        """Remove a previously installed drop or rate-limit rule."""
-        match_fields: dict = {
+        """Removes a previously installed drop or rate-limit rule."""
+        match_fields: dict[str, Any] = {
             "eth_type": 0x0800,
             "ipv4_src": src_ip,
         }

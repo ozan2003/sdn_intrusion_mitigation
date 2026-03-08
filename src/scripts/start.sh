@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Orchestration script for the SDN threat detection demo.
 # Must be run as root from the project root directory.
+
+# Fail on error, unset variables, and pipefail.
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -31,6 +33,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Sudo check
 if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
     echo "[start.sh] This script must be run as root."
     echo "[start.sh] Use: sudo ./src/scripts/start.sh"

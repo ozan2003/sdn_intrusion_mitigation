@@ -1,6 +1,7 @@
-"""Enterprise WAN topology for SDN threat detection simulation.
+"""
+Mininet implementation of the enterprise WAN topology.
 
-4 OVS switches (OpenFlow 1.3), 8 hosts, VLAN-tagged zones on the
+Its comprised of 4 OVS switches (OpenFlow 1.3), 8 hosts, VLAN-tagged zones on the
 backbone switch (s1_omurga), and an OVS mirror port for Suricata.
 """
 

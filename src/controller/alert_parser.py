@@ -38,7 +38,7 @@ _SID_ACTION_MAP: dict[int, MitigationAction] = {
 
 @dataclass(frozen=True, slots=True)
 class Alert:
-    """Structured representation of a Suricata alert."""
+    """Represents a Suricata alert."""
 
     src_ip: IPv4Address
     dst_ip: IPv4Address
@@ -52,15 +52,15 @@ class Alert:
 
 
 class AlertParser:
-    """Tail Suricata's EVE JSON log and emit `Alert` objects."""
+    """Tails Suricata's EVE JSON log and emits `Alert`s."""
 
     def __init__(self, eve_path: str | Path) -> None:
         self._eve_path = Path(eve_path)
 
     def watch(self, callback: Callable[[Alert], None]) -> None:
-        """Block (greenthread-friendly) and tail *eve_path* for new alerts.
+        """Blocks (greenthread-friendly) and tails *eve_path* for new alerts.
 
-        Yields control via ``hub.sleep`` between poll cycles so the Ryu
+        Yields control via `hub.sleep` between poll cycles so the Ryu
         event loop is not starved.
         """
         while not self._eve_path.exists():
@@ -80,7 +80,7 @@ class AlertParser:
 
     @staticmethod
     def _parse(line: str) -> Alert | None:
-        """Parse a single EVE JSON line; return ``Alert`` or ``None``."""
+        """Parse a single EVE JSON line; return `Alert` or `None`."""
         try:
             evt = json.loads(line)
         except json.JSONDecodeError:
