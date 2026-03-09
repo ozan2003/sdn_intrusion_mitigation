@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 LOG = logging.getLogger(__name__)
 
 MITIGATION_PRIORITY = 100
-DEFAULT_HARD_TIMEOUT = 300
+DEFAULT_HARD_TIMEOUT = 300  # seconds
 
 
 class FlowManager:

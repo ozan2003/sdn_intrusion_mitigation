@@ -11,6 +11,7 @@ from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import (
     CONFIG_DISPATCHER,
+    DEAD_DISPATCHER,
     MAIN_DISPATCHER,
     set_ev_cls,
 )
@@ -19,7 +20,7 @@ from ryu.lib.packet import ether_types, ethernet, packet, vlan
 from ryu.ofproto import ofproto_v1_3
 
 from controller.alert_parser import AlertParser, MitigationAction
-from controller.flow_manager import FlowManager
+from controller.flow_manager import DEFAULT_HARD_TIMEOUT, FlowManager
 
 if TYPE_CHECKING:
     from ryu.controller.controller import Datapath
@@ -41,7 +42,9 @@ _ofp_event = cast(Any, ofp_event)
 _hub = cast(Any, hub)
 EVENT_SWITCH_FEATURES = _ofp_event.EventOFPSwitchFeatures
 EVENT_PACKET_IN = _ofp_event.EventOFPPacketIn
+EVENT_STATE_CHANGE = _ofp_event.EventOFPStateChange
 HUB_SPAWN = _hub.spawn
+HUB_SPAWN_AFTER = _hub.spawn_after
 
 
 class ThreatMitigationApp(app_manager.RyuApp):
@@ -87,6 +90,26 @@ class ThreatMitigationApp(app_manager.RyuApp):
                 )
             ],
         )
+
+    @set_ev_cls(EVENT_STATE_CHANGE, [MAIN_DISPATCHER, DEAD_DISPATCHER])
+    def state_change_handler(self, ev: Any) -> None:
+        """Track switch connect/disconnect to keep datapath registry current.
+
+        Without this, a disconnected switch leaves a stale entry in
+        ``self.datapaths`` and ``self.mac_table``, causing mitigation
+        attempts to write to a dead connection.
+        """
+        datapath = cast("Datapath", ev.datapath)
+        if datapath.id is None:
+            return
+
+        if ev.state == MAIN_DISPATCHER:
+            self.datapaths[datapath.id] = datapath
+            LOG.info("Switch registered: dpid=%s", datapath.id)
+        elif ev.state == DEAD_DISPATCHER:
+            self.datapaths.pop(datapath.id)
+            self.mac_table.pop(datapath.id)
+            LOG.warning("Switch disconnected: dpid=%s", datapath.id)
 
     @set_ev_cls(EVENT_PACKET_IN, MAIN_DISPATCHER)
     def packet_in_handler(self, ev: Any) -> None:
@@ -316,3 +339,19 @@ class ThreatMitigationApp(app_manager.RyuApp):
             )
 
         self._mitigated.add(alert.src_ip)
+        # Schedule cleanup aligned with the flow's hard_timeout so the
+        # IP becomes eligible for re-mitigation once the OVS rule expires.
+        HUB_SPAWN_AFTER(
+            DEFAULT_HARD_TIMEOUT, self._clear_mitigation, alert.src_ip
+        )
+
+    def _clear_mitigation(self, src_ip: IPv4Address) -> None:
+        """Remove *src_ip* from the mitigated set after the rule expires.
+
+        If the attacker is still active, Suricata will fire a new alert
+        and a fresh rule will be installed on the next callback cycle.
+        """
+        self._mitigated.discard(src_ip)
+        LOG.info(
+            "Mitigation expired for %s; will re-trigger on new alert", src_ip
+        )
