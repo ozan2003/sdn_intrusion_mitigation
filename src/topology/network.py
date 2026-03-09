@@ -41,7 +41,10 @@ class EnterpriseWanTopo(Topo):
         untagged - DC trunk (s3_dc uplink)
     """
 
-    def build(self) -> None:  # noqa: D102
+    def build(self) -> None:
+        """
+        Build the topology as stated in the documentation.
+        """
         s1 = self.addSwitch(
             "s1_omurga",
             dpid=OMURGA_DPID,
@@ -62,10 +65,12 @@ class EnterpriseWanTopo(Topo):
         paas = self.addHost("paas", ip="10.0.5.10/16")
 
         self.addLink(hacker, s1)
+
         self.addLink(sube_pc, s2)
         self.addLink(s2, s1)
         self.addLink(s4, s1)
         self.addLink(s1, s3)
+
         self.addLink(s3, intra)
         self.addLink(s3, siem)
         self.addLink(s3, radius)
