@@ -11,6 +11,7 @@ export PYTHONPATH="$PROJECT_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 
 RYU_PID=""
 SURICATA_PID_FILE="/var/run/suricata.pid"
+RYU_LOG_FILE="logs/ryu.log"
 
 # Stopping of suricata process is handled by bash not Python
 kill_suricata() {
@@ -58,9 +59,14 @@ kill_suricata
 echo "[start.sh] Creating logs directory ..."
 mkdir -p logs
 : > logs/eve.json
+: > "$RYU_LOG_FILE"
 
-echo "[start.sh] Starting Ryu controller ..."
-"$RYU_MANAGER" controller.app &
+echo "[start.sh] Starting Ryu controller (log file: $RYU_LOG_FILE) ..."
+"$RYU_MANAGER" \
+    --log-file "$RYU_LOG_FILE" \
+    --default-log-level 20 \
+    --nouse-stderr \
+    controller.app &
 RYU_PID=$!
 sleep 3
 if ! kill -0 "$RYU_PID" 2>/dev/null; then
