@@ -16,12 +16,28 @@ SDN backbone switch through a Ryu controller.
 ## Setup
 
 ```bash
-git clone <repo-url> && cd bitirme
+git clone <repo-url>
+cd sdn_threat_detection
+```
 
-# Install Python dependencies into a virtual environment
+### Option A: uv (recommended)
+
+```bash
 uv sync
+```
 
-# Verify system tools
+### Option B: pip
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install -r requirements-dev.txt   # linters, test runner
+```
+
+### Verify system tools
+
+```bash
 ovs-vsctl --version
 suricata --build-info | head -5
 mn --version
@@ -75,13 +91,18 @@ the Ryu controller, and runs `mn -c`.
 
 ## Development
 
+### With uv
+
 ```bash
-# Lint
-uv run ruff check src/ tests/
-
-# Type check
+uv run ruff check
 uv run ty check
-
-# Run tests
 uv run pytest
+```
+
+### With pip (inside activated venv)
+
+```bash
+ruff check
+ty check
+pytest
 ```
