@@ -19,6 +19,7 @@ LOG = logging.getLogger(__name__)
 # wrapper for static typing, we're guaranteeing that hub is imported
 _hub = cast(Any, hub)
 
+# Custom Suricata signature IDs defined in ids/rules/custom.rules.
 SYN_FLOOD_SID = 1000001
 PORT_SCAN_SID = 1000002
 

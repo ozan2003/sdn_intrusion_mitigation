@@ -14,6 +14,7 @@ from ipaddress import IPv4Address
 
 from scapy.all import IP, TCP, send  # type: ignore[import-untyped]
 
+# Default flood profile for demo traffic generation.
 DEFAULT_SYN_FLOOD_DURATION = 30
 DEFAULT_SYN_FLOOD_PPS = 200
 

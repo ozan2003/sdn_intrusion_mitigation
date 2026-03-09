@@ -16,9 +16,10 @@ from mininet.net import Mininet
 from mininet.node import OVSKernelSwitch, RemoteController
 from mininet.topo import Topo
 
+# DPID expected by controller.app for backbone specific forwarding logic.
 OMURGA_DPID = "0000000000000001"
 
-# Various paths for the project.
+# Project-level paths used by topology bootstrap and Suricata startup.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SURICATA_CFG = PROJECT_ROOT / "ids" / "suricata.yaml"
 SURICATA_RULES = PROJECT_ROOT / "ids" / "rules" / "custom.rules"

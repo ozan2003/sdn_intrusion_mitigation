@@ -14,8 +14,10 @@ if TYPE_CHECKING:
 
 LOG = logging.getLogger(__name__)
 
+# Priority used for IDS mitigation rules so they override learning flows.
 MITIGATION_PRIORITY = 100
-DEFAULT_HARD_TIMEOUT = 300  # seconds
+# Default lifetime (seconds) for mitigation flow entries.
+DEFAULT_HARD_TIMEOUT = 300
 
 
 class FlowManager:

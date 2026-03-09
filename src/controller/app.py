@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 LOG = logging.getLogger(__name__)
 
 OMURGA_DPID = 1
+# Suricata EVE log consumed by the alert watcher greenthread.
 EVE_JSON_PATH = Path("logs/eve.json")
 
 # VLAN IDs for the different zones.
@@ -40,6 +41,7 @@ VLAN_HQ = 10
 
 _ofp_event = cast(Any, ofp_event)
 _hub = cast(Any, hub)
+# Aliases keep decorators/type-checking cleaner with Ryu's dynamic event types.
 EVENT_SWITCH_FEATURES = _ofp_event.EventOFPSwitchFeatures
 EVENT_PACKET_IN = _ofp_event.EventOFPPacketIn
 EVENT_STATE_CHANGE = _ofp_event.EventOFPStateChange
@@ -160,6 +162,7 @@ class ThreatMitigationApp(app_manager.RyuApp):
         dst_key_same_vlan = (eth.dst, vlan_vid)
         dst_key_untagged = (eth.dst, 0)
 
+        # Case 1: destination was learned in the same VLAN context.
         if dst_key_same_vlan in table:
             out_port = table[dst_key_same_vlan]
             actions = [parser.OFPActionOutput(out_port)]
@@ -175,6 +178,8 @@ class ThreatMitigationApp(app_manager.RyuApp):
                     eth_src=eth.src,
                     vlan_vid=vlan_vid | ofproto_v1_3.OFPVID_PRESENT,
                 )
+        # Case 2: ingress is tagged but destination is known untagged;
+        # remove VLAN tag before forwarding to the access-side host.
         elif dst_key_untagged in table and vlan_vid != 0:
             out_port = table[dst_key_untagged]
             actions = [
@@ -187,6 +192,8 @@ class ThreatMitigationApp(app_manager.RyuApp):
                 eth_src=eth.src,
                 vlan_vid=vlan_vid | ofproto_v1_3.OFPVID_PRESENT,
             )
+        # Case 3: ingress is untagged but destination was learned in a VLAN;
+        # push that VLAN tag to traverse the backbone segment correctly.
         elif vlan_vid == 0:
             found = self._find_dst_in_vlan(dpid, eth.dst)
             if found is not None:
@@ -207,6 +214,7 @@ class ThreatMitigationApp(app_manager.RyuApp):
                 self._flood(datapath, ofproto, parser, msg)
                 return
         else:
+            # Unknown/unsupported VLAN transition; use flooding fallback.
             self._flood(datapath, ofproto, parser, msg)
             return
 
@@ -281,6 +289,7 @@ class ThreatMitigationApp(app_manager.RyuApp):
         parser: Any,
         msg: Any,
     ) -> None:
+        """Flood a packet when destination learning has not converged yet."""
         actions = [parser.OFPActionOutput(ofproto.OFPP_FLOOD)]
         ThreatMitigationApp._send_packet(
             datapath, ofproto, parser, msg, actions
@@ -294,6 +303,7 @@ class ThreatMitigationApp(app_manager.RyuApp):
         msg: Any,
         actions: list[Any],
     ) -> None:
+        """Send PacketOut using buffer when available to avoid data copy."""
         data = msg.data if msg.buffer_id == ofproto.OFP_NO_BUFFER else None
         out = parser.OFPPacketOut(
             datapath=datapath,
@@ -310,6 +320,11 @@ class ThreatMitigationApp(app_manager.RyuApp):
         self.alert_parser.watch(self._handle_alert)
 
     def _handle_alert(self, alert: Alert) -> None:
+        """Install mitigation on backbone according to Suricata alert action.
+
+        Duplicate alerts for an already-mitigated source are ignored until
+        the mitigation timeout elapses and `_clear_mitigation` runs.
+        """
         if alert.src_ip in self._mitigated:
             return
 

@@ -14,6 +14,7 @@ from ipaddress import IPv4Address
 
 from scapy.all import IP, TCP, send  # type: ignore[import-untyped]
 
+# Default scan range used by CLI args when custom ports are not provided.
 DEFAULT_SCAN_PORT_START = 1
 DEFAULT_SCAN_PORT_END = 1024
 
