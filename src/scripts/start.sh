@@ -10,6 +10,7 @@ cd "$PROJECT_ROOT"
 export PYTHONPATH="$PROJECT_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 
 RYU_PID=""
+RYU_CMD=()
 SURICATA_PID_FILE="/var/run/suricata.pid"
 RYU_LOG_FILE="logs/ryu.log"
 
@@ -42,10 +43,12 @@ if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
     exit 1
 fi
 
-if [[ -x "$PROJECT_ROOT/.venv/bin/ryu-manager" ]]; then
-    RYU_MANAGER="$PROJECT_ROOT/.venv/bin/ryu-manager"
+if [[ -x "$PROJECT_ROOT/.venv/bin/python3" ]] && \
+    "$PROJECT_ROOT/.venv/bin/python3" -c "import ryu.cmd.manager" >/dev/null 2>&1; then
+    # Use python -m to avoid stale/broken shebang paths inside ryu-manager entrypoint.
+    RYU_CMD=("$PROJECT_ROOT/.venv/bin/python3" -m ryu.cmd.manager)
 elif command -v ryu-manager >/dev/null 2>&1; then
-    RYU_MANAGER="$(command -v ryu-manager)"
+    RYU_CMD=("$(command -v ryu-manager)")
 else
     echo "[start.sh] ryu-manager not found."
     echo "[start.sh] Install dependencies or create .venv with ryu-manager."
@@ -62,7 +65,7 @@ mkdir -p logs
 : > "$RYU_LOG_FILE"
 
 echo "[start.sh] Starting Ryu controller (log file: $RYU_LOG_FILE) ..."
-"$RYU_MANAGER" \
+"${RYU_CMD[@]}" \
     --log-file "$RYU_LOG_FILE" \
     --default-log-level 20 \
     --nouse-stderr \
