@@ -11,6 +11,7 @@ import subprocess
 import time
 from pathlib import Path
 from shutil import which
+from typing import IO
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -28,6 +29,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SURICATA_CFG = PROJECT_ROOT / "ids" / "suricata.yaml"
 SURICATA_RULES = PROJECT_ROOT / "ids" / "rules" / "custom.rules"
 LOG_DIR = PROJECT_ROOT / "logs"
+SURICATA_STDERR_LOG = LOG_DIR / "suricata_stderr.log"
 SURICATA_BIN = which("suricata")
 
 
@@ -201,6 +203,7 @@ class SuricataProcess:
 
     def __init__(self) -> None:
         self._process: subprocess.Popen[str] | None = None
+        self._log_fh: IO[str] | None = None
 
     def start(self) -> subprocess.Popen[str]:
         """Launch Suricata in foreground mode on the mirror0 interface."""
@@ -218,6 +221,8 @@ class SuricataProcess:
             msg = f"Suricata rule file not found: {SURICATA_RULES}"
             raise FileNotFoundError(msg)
 
+        self._log_fh = SURICATA_STDERR_LOG.open("a")
+
         process = subprocess.Popen(  # noqa: S603
             [
                 SURICATA_BIN,
@@ -231,7 +236,7 @@ class SuricataProcess:
                 str(SURICATA_RULES),
             ],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stderr=self._log_fh,
             text=True,
         )
 
@@ -240,21 +245,34 @@ class SuricataProcess:
         # Give Suricata a moment to initialize and fail fast if startup breaks.
         time.sleep(1)
         if process.poll() is not None:
-            msg = f"Suricata exited during startup with code {process.returncode}"
+            self._log_fh.flush()
+            diag = SURICATA_STDERR_LOG.read_text().strip()[-2000:]
+            msg = (
+                f"Suricata exited during startup with code {process.returncode}"
+                f"\n--- console log tail ---\n{diag}"
+            )
             raise RuntimeError(msg)
 
         print(f"[topology] Suricata started on mirror0 (log dir: {LOG_DIR})")
         return process
 
+    def _close_log(self) -> None:
+        """Close the console log file handle if open."""
+        if self._log_fh is not None:
+            self._log_fh.close()
+            self._log_fh = None
+
     def stop(self) -> None:
         """Stop Suricata process started by this manager."""
         if self._process is None:
+            self._close_log()
             return
 
         process = self._process
 
         if process.poll() is not None:
             self._process = None
+            self._close_log()
             return
 
         process.terminate()
@@ -264,7 +282,8 @@ class SuricataProcess:
             process.kill()
             process.wait(timeout=5)  # let this raise if it fails
         finally:
-            self._process = None  # null out only after we're done with it
+            self._process = None
+            self._close_log()
 
         print("[topology] Suricata stopped")
 

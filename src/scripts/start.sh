@@ -53,6 +53,7 @@ mn -c 2>/dev/null || true
 echo "[start.sh] Creating logs directory ..."
 mkdir -p logs
 : > logs/eve.json
+: > logs/suricata_stderr.log
 : > "$RYU_LOG_FILE"
 
 echo "[start.sh] Starting Ryu controller (log file: $RYU_LOG_FILE) ..."
