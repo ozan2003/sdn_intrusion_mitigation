@@ -4,28 +4,52 @@ certifi==2026.2.25
     # via requests
 charset-normalizer==3.4.4
     # via requests
+contourpy==1.3.3
+    # via matplotlib
+cycler==0.12.1
+    # via matplotlib
 dnspython==2.8.0
     # via eventlet
 eventlet==0.40.4
     # via sdn-threat-detection
+fonttools==4.62.1
+    # via matplotlib
 greenlet==3.3.2
     # via eventlet
 idna==3.11
     # via requests
+kiwisolver==1.5.0
+    # via matplotlib
 legacy-cgi==2.6.4 ; python_full_version >= '3.13'
     # via webob
+matplotlib==3.10.8
+    # via sdn-threat-detection
 mininet==2.3.0.dev6
     # via sdn-threat-detection
 netaddr==1.3.0
     # via
     #   oslo-config
     #   sdn-threat-detection
+networkx==3.6.1
+    # via sdn-threat-detection
+numpy==2.4.3
+    # via
+    #   contourpy
+    #   matplotlib
 oslo-config==10.3.0
     # via sdn-threat-detection
 oslo-i18n==6.7.2
     # via oslo-config
+packaging==26.0
+    # via matplotlib
 pbr==7.0.3
     # via oslo-i18n
+pillow==12.1.1
+    # via matplotlib
+pyparsing==3.3.2
+    # via matplotlib
+python-dateutil==2.9.0.post0
+    # via matplotlib
 pyyaml==6.0.3
     # via oslo-config
 repoze-lru==0.7
@@ -46,6 +70,7 @@ setuptools==82.0.0
     #   pbr
 six==1.17.0
     # via
+    #   python-dateutil
     #   routes
     #   sdn-threat-detection
 stevedore==5.7.0
