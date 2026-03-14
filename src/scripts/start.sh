@@ -11,6 +11,7 @@ export PYTHONPATH="$PROJECT_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 
 RYU_PID=""
 RYU_CMD=()
+PYTHON_CMD=()
 SURICATA_PID_FILE="/var/run/suricata.pid"
 RYU_LOG_FILE="logs/ryu.log"
 
@@ -55,6 +56,12 @@ else
     exit 1
 fi
 
+if [[ -x "$PROJECT_ROOT/.venv/bin/python3" ]]; then
+    PYTHON_CMD=("$PROJECT_ROOT/.venv/bin/python3")
+else
+    PYTHON_CMD=("python3")
+fi
+
 echo "[start.sh] Cleaning stale state ..."
 mn -c 2>/dev/null || true
 kill_suricata
@@ -78,4 +85,4 @@ if ! kill -0 "$RYU_PID" 2>/dev/null; then
 fi
 
 echo "[start.sh] Launching Mininet topology ..."
-python3 src/topology/network.py
+"${PYTHON_CMD[@]}" src/topology/network.py
