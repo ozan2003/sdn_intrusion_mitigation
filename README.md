@@ -7,9 +7,9 @@ SDN backbone switch through a Ryu controller.
 ## Prerequisites
 
 - Linux (tested on Linux Mint 22)
-- [Mininet](http://mininet.org/) (system-wide)
-- [Open vSwitch](https://www.openvswitch.org/)
-- [Suricata](https://suricata.io/) >= 6
+- [Mininet](http://mininet.org/)
+- [Open vSwitch](https://www.openvswitch.org/) (system-wide, not in venv)
+- [Suricata](https://suricata.io/) >= 6 (system-wide, not in venv)
 - Python >= 3.12
 - [uv](https://docs.astral.sh/uv/) (recommended) or pip
 
@@ -39,13 +39,9 @@ pip install -r requirements-dev.txt   # linters, test runner
 
 ```bash
 ovs-vsctl --version
-suricata --build-info | head -5
+suricata --build-info
 mn --version
 ```
-
-Mininet is installed system-wide and is not a pip package in the venv. If
-`ty check` reports unresolved mininet imports, this is expected (the venv
-does not inherit system site-packages by default).
 
 ## Usage
 
