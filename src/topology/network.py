@@ -109,9 +109,13 @@ class EnterpriseWanTopo(Topo):
 
 def _run(cmd: str) -> str:
     """Run a shell command and return stripped stdout."""
-    return subprocess.check_output(  # noqa: S603
-        cmd.split(), text=True
-    ).strip()
+    try:
+        return subprocess.check_output(  # noqa: S603
+            cmd.split(), text=True, stderr=subprocess.PIPE
+        ).strip()
+    except subprocess.CalledProcessError as e:
+        msg = f"Command failed: {cmd!r}\n{e.stderr}"
+        raise RuntimeError(msg) from e
 
 
 def _get_ofport(interface: str) -> str:
