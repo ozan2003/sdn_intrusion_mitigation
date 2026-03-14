@@ -139,6 +139,7 @@ def display_network_topo(graph: nx.Graph) -> None:
 
     Nodes are colored based on their type (host or switch) for better visualization.
     """
+    # Hosts are light green, switches are light blue.
     colors = [
         "lightgreen" if graph.nodes[n].get("type") == "host" else "lightblue"
         for n in graph.nodes
