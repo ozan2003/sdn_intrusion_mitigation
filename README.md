@@ -62,6 +62,15 @@ This will:
 3. Launch the Mininet topology, configure OVS mirror + VLANs, start Suricata.
 4. Drop into the Mininet CLI.
 
+### Visualizing the Topology Only
+
+```bash
+python3 src/scripts/visualize_topology.py
+```
+
+This opens the topology graph in a Matplotlib window without starting Ryu,
+Mininet runtime services, or Suricata.
+
 ### Simulating Attacks
 
 From the Mininet CLI:
