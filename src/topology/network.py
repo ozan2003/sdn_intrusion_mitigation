@@ -10,6 +10,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+import matplotlib.pyplot as plt
+import networkx as nx
 from mininet.cli import CLI
 from mininet.log import setLogLevel
 from mininet.net import Mininet
@@ -79,6 +81,28 @@ class EnterpriseWanTopo(Topo):
         self.addLink(s3, dr_host)
         self.addLink(s3, paas)
 
+    def to_graph(self) -> nx.Graph:
+        """
+        Convert the topology to a NetworkX graph.
+
+        This is not used for topology construction, but can be useful for visualization, testing, or other analyses.
+        """
+        graph = nx.Graph()
+
+        # hosts
+        for h in self.hosts():
+            graph.add_node(h, type="host")
+
+        # switches
+        for s in self.switches():
+            graph.add_node(s, type="switch")
+
+        # links
+        for n1, n2 in self.links():
+            graph.add_edge(n1, n2)
+
+        return graph
+
 
 def _run(cmd: str) -> str:
     """Run a shell command and return stripped stdout."""
@@ -107,6 +131,30 @@ def _peer_port_name(
         "cannot configure VLAN access tag"
     )
     raise RuntimeError(msg)
+
+
+def display_network_topo(graph: nx.Graph) -> None:
+    """
+    Display the network topology graph using Matplotlib.
+
+    Nodes are colored based on their type (host or switch) for better visualization.
+    """
+    colors = [
+        "lightgreen" if graph.nodes[n].get("type") == "host" else "lightblue"
+        for n in graph.nodes
+    ]
+
+    pos = nx.spring_layout(graph)
+
+    nx.draw(
+        graph,
+        pos,
+        with_labels=True,
+        node_color=colors,
+        node_size=2000,
+    )
+
+    plt.show()
 
 
 def setup_mirror_and_vlans(net: Mininet) -> None:

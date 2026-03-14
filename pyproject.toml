@@ -16,6 +16,9 @@ dependencies = [
     "tinyrpc>=1.1.7",
     "webob>=1.8.9",
     "scapy>=2.6",          # attack simulation
+    # visualization dependencies
+    "networkx>=3.6.1",
+    "matplotlib>=3.10.8",
 ]
 
 [tool.uv.sources]
