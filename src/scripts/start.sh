@@ -12,25 +12,10 @@ export PYTHONPATH="$PROJECT_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
 RYU_PID=""
 RYU_CMD=()
 PYTHON_CMD=()
-SURICATA_PID_FILE="/var/run/suricata.pid"
 RYU_LOG_FILE="logs/ryu.log"
-
-# Stopping of suricata process is handled by bash not Python
-kill_suricata() {
-    if [[ -f "$SURICATA_PID_FILE" ]]; then
-        local suricata_pid
-        suricata_pid="$(<"$SURICATA_PID_FILE")"
-        if [[ -n "$suricata_pid" ]] && kill -0 "$suricata_pid" 2>/dev/null; then
-            kill "$suricata_pid" 2>/dev/null || true
-        fi
-        rm -f "$SURICATA_PID_FILE"
-    fi
-    pkill -x suricata 2>/dev/null || true
-}
 
 cleanup() {
     echo "[start.sh] Cleaning up ..."
-    kill_suricata
     [[ -n "$RYU_PID" ]] && kill "$RYU_PID" 2>/dev/null || true
     mn -c 2>/dev/null || true
     echo "[start.sh] Done."
@@ -64,7 +49,6 @@ fi
 
 echo "[start.sh] Cleaning stale state ..."
 mn -c 2>/dev/null || true
-kill_suricata
 
 echo "[start.sh] Creating logs directory ..."
 mkdir -p logs

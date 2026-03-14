@@ -8,7 +8,9 @@ backbone switch (s1_omurga), and an OVS mirror port for Suricata.
 from __future__ import annotations
 
 import subprocess
+import time
 from pathlib import Path
+from shutil import which
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -26,6 +28,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SURICATA_CFG = PROJECT_ROOT / "ids" / "suricata.yaml"
 SURICATA_RULES = PROJECT_ROOT / "ids" / "rules" / "custom.rules"
 LOG_DIR = PROJECT_ROOT / "logs"
+SURICATA_BIN = which("suricata")
 
 
 class EnterpriseWanTopo(Topo):
@@ -189,22 +192,83 @@ def setup_mirror_and_vlans(net: Mininet) -> None:
     )
 
 
-def start_suricata() -> None:
-    """Launch Suricata in daemon mode on the mirror0 interface.
+class SuricataProcess:
+    """Manage Suricata process lifecycle with context-manager semantics."""
 
-    Stopping of suricata process is handled by start.sh script.
-    """
-    LOG_DIR.mkdir(parents=True, exist_ok=True)
-    if not SURICATA_RULES.exists():
-        msg = f"Suricata rule file not found: {SURICATA_RULES}"
-        raise FileNotFoundError(msg)
+    def __init__(self) -> None:
+        self._process: subprocess.Popen[str] | None = None
 
-    _run(
-        f"suricata -c {SURICATA_CFG} -i mirror0 -D -l {LOG_DIR} "
-        f"-S {SURICATA_RULES} "
-        "--pidfile /var/run/suricata.pid"
-    )
-    print(f"[topology] Suricata started on mirror0 (log dir: {LOG_DIR})")
+    def start(self) -> subprocess.Popen[str]:
+        """Launch Suricata in foreground mode on the mirror0 interface."""
+        if self._process is not None and self._process.poll() is None:
+            msg = "Suricata process is already running"
+            raise RuntimeError(msg)
+
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+        if SURICATA_BIN is None:
+            msg = "suricata executable not found in PATH"
+            raise FileNotFoundError(msg)
+
+        if not SURICATA_RULES.exists():
+            msg = f"Suricata rule file not found: {SURICATA_RULES}"
+            raise FileNotFoundError(msg)
+
+        process = subprocess.Popen(  # noqa: S603
+            [
+                SURICATA_BIN,
+                "-c",
+                str(SURICATA_CFG),
+                "-i",
+                "mirror0",
+                "-l",
+                str(LOG_DIR),
+                "-S",
+                str(SURICATA_RULES),
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            text=True,
+        )
+
+        self._process = process
+
+        # Give Suricata a moment to initialize and fail fast if startup breaks.
+        time.sleep(1)
+        if process.poll() is not None:
+            msg = f"Suricata exited during startup with code {process.returncode}"
+            raise RuntimeError(msg)
+
+        print(f"[topology] Suricata started on mirror0 (log dir: {LOG_DIR})")
+        return process
+
+    def stop(self) -> None:
+        """Stop Suricata process started by this manager."""
+        if self._process is None:
+            return
+
+        process = self._process
+
+        if process.poll() is not None:
+            self._process = None
+            return
+
+        process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=5)  # let this raise if it fails
+        finally:
+            self._process = None  # null out only after we're done with it
+
+        print("[topology] Suricata stopped")
+
+    def __enter__(self) -> subprocess.Popen[str]:
+        return self.start()
+
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
+        self.stop()
 
 
 def main() -> None:
@@ -217,14 +281,15 @@ def main() -> None:
         controller=RemoteController("ryu", ip="127.0.0.1", port=6633),
         autoSetMacs=True,
     )
+
     net.start()
 
-    setup_mirror_and_vlans(net)
-    start_suricata()
-
-    CLI(net)
-
-    net.stop()
+    try:
+        setup_mirror_and_vlans(net)
+        with SuricataProcess() as _suricata:
+            CLI(net)
+    finally:
+        net.stop()
 
 
 if __name__ == "__main__":
