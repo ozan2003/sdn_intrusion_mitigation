@@ -5,6 +5,8 @@
 # Fail on error, unset variables, and pipefail.
 set -euo pipefail
 
+SCRIPT_NAME="${0##*/}"
+
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$PROJECT_ROOT"
 export PYTHONPATH="$PROJECT_ROOT/src${PYTHONPATH:+:$PYTHONPATH}"
@@ -15,17 +17,17 @@ PYTHON_CMD=()
 RYU_LOG_FILE="logs/ryu.log"
 
 cleanup() {
-    echo "[start.sh] Cleaning up ..."
+    echo "[$SCRIPT_NAME] Cleaning up ..."
     [[ -n "$RYU_PID" ]] && kill "$RYU_PID" 2>/dev/null || true
     mn -c 2>/dev/null || true
-    echo "[start.sh] Done."
+    echo "[$SCRIPT_NAME] Done."
 }
 trap cleanup EXIT
 
 # Sudo check
 if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
-    echo "[start.sh] This script must be run as root."
-    echo "[start.sh] Use: sudo ./src/scripts/start.sh"
+    echo "[$SCRIPT_NAME] This script must be run as root."
+    echo "[$SCRIPT_NAME] Use: sudo ${0}"
     exit 1
 fi
 
@@ -36,8 +38,8 @@ if [[ -x "$PROJECT_ROOT/.venv/bin/python3" ]] && \
 elif command -v ryu-manager >/dev/null 2>&1; then
     RYU_CMD=("$(command -v ryu-manager)")
 else
-    echo "[start.sh] ryu-manager not found."
-    echo "[start.sh] Install dependencies or create .venv with ryu-manager."
+    echo "[$SCRIPT_NAME] ryu-manager not found."
+    echo "[$SCRIPT_NAME] Install dependencies or create .venv with ryu-manager."
     exit 1
 fi
 
@@ -47,16 +49,17 @@ else
     PYTHON_CMD=("python3")
 fi
 
-echo "[start.sh] Cleaning stale state ..."
+echo "[$SCRIPT_NAME] Cleaning stale state ..."
 mn -c 2>/dev/null || true
 
-echo "[start.sh] Creating logs directory ..."
+echo "[$SCRIPT_NAME] Creating logs directory ..."
 mkdir -p logs
+# these are truncated (assuming they exist) every invocation
 : > logs/eve.json
 : > logs/suricata_stderr.log
 : > "$RYU_LOG_FILE"
 
-echo "[start.sh] Starting Ryu controller (log file: $RYU_LOG_FILE) ..."
+echo "[$SCRIPT_NAME] Starting Ryu controller (log file: $RYU_LOG_FILE) ..."
 "${RYU_CMD[@]}" \
     --log-file "$RYU_LOG_FILE" \
     --default-log-level 20 \
@@ -65,9 +68,9 @@ echo "[start.sh] Starting Ryu controller (log file: $RYU_LOG_FILE) ..."
 RYU_PID=$!
 sleep 3
 if ! kill -0 "$RYU_PID" 2>/dev/null; then
-    echo "[start.sh] Ryu controller exited unexpectedly. Check controller logs."
+    echo "[$SCRIPT_NAME] Ryu controller exited unexpectedly. Check controller logs."
     exit 1
 fi
 
-echo "[start.sh] Launching Mininet topology ..."
+echo "[$SCRIPT_NAME] Launching Mininet topology ..."
 "${PYTHON_CMD[@]}" src/topology/network.py

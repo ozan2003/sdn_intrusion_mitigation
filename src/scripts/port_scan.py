@@ -14,6 +14,8 @@ from ipaddress import IPv4Address
 
 from scapy.all import IP, TCP, send  # type: ignore[import-untyped]
 
+FILE_NAME = __file__.split("/")[-1]
+
 # Default scan range used by CLI args when custom ports are not provided.
 DEFAULT_SCAN_PORT_START = 1
 DEFAULT_SCAN_PORT_END = 1024
@@ -44,7 +46,7 @@ def port_scan(
         msg = "Start port must be less than end port"
         raise ValueError(msg)
 
-    print(f"[port-scan] target={target} ports={start_port}..={end_port}")
+    print(f"[{FILE_NAME}] {target=} ports={start_port}..={end_port}")
 
     for port in range(start_port, end_port + 1):
         pkt = IP(dst=str(target)) / TCP(
@@ -56,7 +58,7 @@ def port_scan(
         time.sleep(0.01)
 
     total = end_port - start_port + 1
-    print(f"[port-scan] done - {total} ports scanned")
+    print(f"[{FILE_NAME}] done - {total} ports scanned")
 
 
 def _build_parser() -> argparse.ArgumentParser:

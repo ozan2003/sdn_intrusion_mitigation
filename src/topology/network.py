@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import subprocess
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from shutil import which
-from typing import IO
+from typing import IO, Any
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -20,6 +22,8 @@ from mininet.log import setLogLevel
 from mininet.net import Mininet
 from mininet.node import OVSKernelSwitch, RemoteController
 from mininet.topo import Topo
+
+FILE_NAME = __file__.split("/")[-1]
 
 # DPID expected by controller.app for backbone specific forwarding logic.
 OMURGA_DPID = "0000000000000001"
@@ -90,7 +94,8 @@ class EnterpriseWanTopo(Topo):
         """
         Convert the topology to a NetworkX graph.
 
-        This is not used for topology construction, but can be useful for visualization, testing, or other analyses.
+        This is not used for topology construction, but can be useful for
+        visualization, testing, or other analyses.
         """
         graph = nx.Graph()
 
@@ -193,7 +198,7 @@ def setup_mirror_and_vlans(net: Mininet) -> None:
         _run(f"ovs-vsctl set Port {port_name} tag={vlan_id}")
 
     print(
-        f"[topology] mirror0 (ofport {mirror0_ofport}) active, "
+        f"[{FILE_NAME}] mirror0 (ofport {mirror0_ofport}) active, "
         "VLANs configured on s1_omurga"
     )
 
@@ -253,7 +258,9 @@ class SuricataProcess:
             )
             raise RuntimeError(msg)
 
-        print(f"[topology] Suricata started on mirror0 (log dir: {LOG_DIR})")
+        print(
+            f"[{FILE_NAME}] Suricata started on mirror0 (log dir: {LOG_DIR.relative_to(PROJECT_ROOT)})"
+        )
         return process
 
     def _close_log(self) -> None:
@@ -285,7 +292,7 @@ class SuricataProcess:
             self._process = None
             self._close_log()
 
-        print("[topology] Suricata stopped")
+        print(f"[{FILE_NAME}] Suricata stopped")
 
     def __enter__(self) -> subprocess.Popen[str]:
         return self.start()
@@ -294,25 +301,39 @@ class SuricataProcess:
         self.stop()
 
 
+@contextmanager
+def managed_mininet(topo: Topo, **kwargs: Any) -> Iterator[Mininet]:
+    """Wrapper for managing Mininet lifecycle with context-manager semantics.
+
+    Args:
+        topo: The Mininet topology to instantiate.
+        **kwargs: Additional keyword arguments to pass to the Mininet constructor.
+
+    Yields:
+        An instance of the started Mininet network.
+    """
+    net = Mininet(topo=topo, **kwargs)
+    net.start()
+    try:
+        yield net
+    finally:
+        net.stop()
+
+
 def main() -> None:
     """Start the Mininet topology, configure mirroring, and open CLI."""
     setLogLevel("info")
     topo = EnterpriseWanTopo()
-    net = Mininet(
-        topo=topo,
+
+    with managed_mininet(
+        topo,
         switch=OVSKernelSwitch,
         controller=RemoteController("ryu", ip="127.0.0.1", port=6633),
         autoSetMacs=True,
-    )
-
-    net.start()
-
-    try:
+    ) as net:
         setup_mirror_and_vlans(net)
         with SuricataProcess() as _suricata:
             CLI(net)
-    finally:
-        net.stop()
 
 
 if __name__ == "__main__":
