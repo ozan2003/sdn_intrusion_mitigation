@@ -17,7 +17,8 @@ from ryu.controller.handler import (
 )
 from ryu.lib import hub
 from ryu.lib.packet import ether_types, ethernet, packet, vlan
-from ryu.ofproto import ofproto_v1_3
+from ryu.ofproto import ofproto_v1_3 as ofproto13
+from ryu.ofproto import ofproto_v1_3_parser as parser13
 
 from controller.alert_parser import AlertParser, MitigationAction
 from controller.flow_manager import DEFAULT_HARD_TIMEOUT, FlowManager
@@ -52,7 +53,7 @@ HUB_SPAWN_AFTER = _hub.spawn_after
 class ThreatMitigationApp(app_manager.RyuApp):
     """VLAN-aware L2 switch with automated Suricata alert response."""
 
-    OFP_VERSIONS: ClassVar[list[int]] = [ofproto_v1_3.OFP_VERSION]
+    OFP_VERSIONS: ClassVar[list[int]] = [ofproto13.OFP_VERSION]
 
     def __init__(self, *args: object, **kwargs: object) -> None:
         super().__init__(*args, **kwargs)
@@ -67,8 +68,6 @@ class ThreatMitigationApp(app_manager.RyuApp):
     def switch_features_handler(self, ev: Any) -> None:
         """Install table-miss flow and register the datapath."""
         datapath = cast("Datapath", ev.msg.datapath)
-        ofproto = datapath.ofproto
-        parser = datapath.ofproto_parser
         if datapath.id is None:
             LOG.error("Connected switch has no datapath id; skipping setup")
             return
@@ -76,10 +75,10 @@ class ThreatMitigationApp(app_manager.RyuApp):
         self.datapaths[datapath.id] = datapath
         LOG.info("Switch connected: dpid=%s", datapath.id)
 
-        match = parser.OFPMatch()
+        match = parser13.OFPMatch()
         actions = [
-            parser.OFPActionOutput(
-                ofproto.OFPP_CONTROLLER, ofproto.OFPCML_NO_BUFFER
+            parser13.OFPActionOutput(
+                ofproto13.OFPP_CONTROLLER, ofproto13.OFPCML_NO_BUFFER
             )
         ]
         self.flow_manager.add_flow(
@@ -87,8 +86,8 @@ class ThreatMitigationApp(app_manager.RyuApp):
             priority=0,
             match=match,
             instructions=[
-                parser.OFPInstructionActions(
-                    ofproto.OFPIT_APPLY_ACTIONS, actions
+                parser13.OFPInstructionActions(
+                    ofproto13.OFPIT_APPLY_ACTIONS, actions
                 )
             ],
         )
@@ -122,7 +121,6 @@ class ThreatMitigationApp(app_manager.RyuApp):
             LOG.error("PacketIn received from datapath without id")
             return
         dpid = datapath.id
-        ofproto = datapath.ofproto
         in_port = msg.match["in_port"]
 
         pkt = packet.Packet(msg.data)
@@ -136,21 +134,19 @@ class ThreatMitigationApp(app_manager.RyuApp):
         vlan_vid = vlan_hdr.vid if vlan_hdr else 0
 
         if dpid == OMURGA_DPID:
-            self._handle_omurga(msg, datapath, ofproto, in_port, eth, vlan_vid)
+            self._handle_omurga(msg, datapath, in_port, eth, vlan_vid)
         else:
-            self._handle_simple_switch(msg, datapath, ofproto, in_port, eth)
+            self._handle_simple_switch(msg, datapath, in_port, eth)
 
     def _handle_omurga(
         self,
         msg: Any,
         datapath: Datapath,
-        ofproto: Any,
         in_port: int,
         eth: ethernet.ethernet,
         vlan_vid: int,
     ) -> None:
         """VLAN-aware forwarding on the backbone switch."""
-        parser = datapath.ofproto_parser
         if datapath.id is None:
             LOG.error("Backbone handler received datapath without id")
             return
@@ -165,32 +161,32 @@ class ThreatMitigationApp(app_manager.RyuApp):
         # Case 1: destination was learned in the same VLAN context.
         if dst_key_same_vlan in table:
             out_port = table[dst_key_same_vlan]
-            actions = [parser.OFPActionOutput(out_port)]
-            match = parser.OFPMatch(
+            actions = [parser13.OFPActionOutput(out_port)]
+            match = parser13.OFPMatch(
                 in_port=in_port,
                 eth_dst=eth.dst,
                 eth_src=eth.src,
             )
             if vlan_vid:
-                match = parser.OFPMatch(
+                match = parser13.OFPMatch(
                     in_port=in_port,
                     eth_dst=eth.dst,
                     eth_src=eth.src,
-                    vlan_vid=vlan_vid | ofproto_v1_3.OFPVID_PRESENT,
+                    vlan_vid=vlan_vid | ofproto13.OFPVID_PRESENT,
                 )
         # Case 2: ingress is tagged but destination is known untagged;
         # remove VLAN tag before forwarding to the access-side host.
         elif dst_key_untagged in table and vlan_vid != 0:
             out_port = table[dst_key_untagged]
             actions = [
-                parser.OFPActionPopVlan(),
-                parser.OFPActionOutput(out_port),
+                parser13.OFPActionPopVlan(),
+                parser13.OFPActionOutput(out_port),
             ]
-            match = parser.OFPMatch(
+            match = parser13.OFPMatch(
                 in_port=in_port,
                 eth_dst=eth.dst,
                 eth_src=eth.src,
-                vlan_vid=vlan_vid | ofproto_v1_3.OFPVID_PRESENT,
+                vlan_vid=vlan_vid | ofproto13.OFPVID_PRESENT,
             )
         # Case 3: ingress is untagged but destination was learned in a VLAN;
         # push that VLAN tag to traverse the backbone segment correctly.
@@ -199,27 +195,29 @@ class ThreatMitigationApp(app_manager.RyuApp):
             if found is not None:
                 out_port, dst_vlan = found
                 actions = [
-                    parser.OFPActionPushVlan(ether_types.ETH_TYPE_8021Q),
-                    parser.OFPActionSetField(
-                        vlan_vid=dst_vlan | ofproto_v1_3.OFPVID_PRESENT
+                    parser13.OFPActionPushVlan(ether_types.ETH_TYPE_8021Q),
+                    parser13.OFPActionSetField(
+                        vlan_vid=dst_vlan | ofproto13.OFPVID_PRESENT
                     ),
-                    parser.OFPActionOutput(out_port),
+                    parser13.OFPActionOutput(out_port),
                 ]
-                match = parser.OFPMatch(
+                match = parser13.OFPMatch(
                     in_port=in_port,
                     eth_dst=eth.dst,
                     eth_src=eth.src,
                 )
             else:
-                self._flood(datapath, ofproto, parser, msg)
+                self._flood(datapath, msg)
                 return
         else:
             # Unknown/unsupported VLAN transition; use flooding fallback.
-            self._flood(datapath, ofproto, parser, msg)
+            self._flood(datapath, msg)
             return
 
         inst = [
-            parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS, actions)
+            parser13.OFPInstructionActions(
+                ofproto13.OFPIT_APPLY_ACTIONS, actions
+            )
         ]
         self.flow_manager.add_flow(
             datapath,
@@ -228,18 +226,16 @@ class ThreatMitigationApp(app_manager.RyuApp):
             instructions=inst,
             idle_timeout=300,
         )
-        self._send_packet(datapath, ofproto, parser, msg, actions)
+        self._send_packet(datapath, msg, actions)
 
     def _handle_simple_switch(
         self,
         msg: Any,
         datapath: Datapath,
-        ofproto: Any,
         in_port: int,
         eth: ethernet.ethernet,
     ) -> None:
         """Plain L2 learning for non-backbone switches."""
-        parser = datapath.ofproto_parser
         if datapath.id is None:
             LOG.error("Switch handler received datapath without id")
             return
@@ -249,17 +245,17 @@ class ThreatMitigationApp(app_manager.RyuApp):
         table[(eth.src, 0)] = in_port
 
         dst_key = (eth.dst, 0)
-        out_port = table.get(dst_key, ofproto.OFPP_FLOOD)
+        out_port = table.get(dst_key, ofproto13.OFPP_FLOOD)
 
-        actions = [parser.OFPActionOutput(out_port)]
+        actions = [parser13.OFPActionOutput(out_port)]
 
-        if out_port != ofproto.OFPP_FLOOD:
-            match = parser.OFPMatch(
+        if out_port != ofproto13.OFPP_FLOOD:
+            match = parser13.OFPMatch(
                 in_port=in_port, eth_dst=eth.dst, eth_src=eth.src
             )
             inst = [
-                parser.OFPInstructionActions(
-                    ofproto.OFPIT_APPLY_ACTIONS, actions
+                parser13.OFPInstructionActions(
+                    ofproto13.OFPIT_APPLY_ACTIONS, actions
                 )
             ]
             self.flow_manager.add_flow(
@@ -270,7 +266,7 @@ class ThreatMitigationApp(app_manager.RyuApp):
                 idle_timeout=300,
             )
 
-        self._send_packet(datapath, ofproto, parser, msg, actions)
+        self._send_packet(datapath, msg, actions)
 
     def _find_dst_in_vlan(
         self, dpid: int, dst_mac: str
@@ -285,27 +281,21 @@ class ThreatMitigationApp(app_manager.RyuApp):
     @staticmethod
     def _flood(
         datapath: Datapath,
-        ofproto: Any,
-        parser: Any,
         msg: Any,
     ) -> None:
         """Flood a packet when destination learning has not converged yet."""
-        actions = [parser.OFPActionOutput(ofproto.OFPP_FLOOD)]
-        ThreatMitigationApp._send_packet(
-            datapath, ofproto, parser, msg, actions
-        )
+        actions = [parser13.OFPActionOutput(ofproto13.OFPP_FLOOD)]
+        ThreatMitigationApp._send_packet(datapath, msg, actions)
 
     @staticmethod
     def _send_packet(
         datapath: Datapath,
-        ofproto: Any,
-        parser: Any,
         msg: Any,
         actions: list[Any],
     ) -> None:
         """Send PacketOut using buffer when available to avoid data copy."""
-        data = msg.data if msg.buffer_id == ofproto.OFP_NO_BUFFER else None
-        out = parser.OFPPacketOut(
+        data = msg.data if msg.buffer_id == ofproto13.OFP_NO_BUFFER else None
+        out = parser13.OFPPacketOut(
             datapath=datapath,
             buffer_id=msg.buffer_id,
             in_port=msg.match["in_port"],
