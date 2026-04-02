@@ -28,7 +28,11 @@ ryu = { git = "https://github.com/MalachiteN/ryu-python-3.12.git" }
 extra-paths = ["/home/ozan/.local/lib/python3.12/site-packages"]
 
 [dependency-groups]
-dev = ["pytest>=9.0.2", "ruff>=0.15.4", "ty>=0.0.19"]
+dev = [
+    "basedpyright>=1.39.0",
+    "pytest>=9.0.2",
+    "ruff>=0.15.4",
+]
 
 [tool.ruff]
 line-length = 79
@@ -91,3 +95,23 @@ markers = [
     "integration: tests that combine multiple components",
     "slow: tests that take noticeably longer to run",
 ]
+
+[tool.basedpyright]
+pythonVersion = "3.12"
+include = ["src", "tests"]
+exclude = ["**/stubs/**", "**/__pycache__/**", ".venv"]
+stubPath = "stubs"
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "basic"
+reportAny = false
+reportUnusedCallResult = false
+reportUnknownArgumentType = "none"
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
+reportAttributeAccessIssue = "none"
+reportMissingTypeStubs = "none"
+reportUntypedFunctionDecorator = "none"
+reportGeneralTypeIssues = "warning"
+reportArgumentType = "none"
+reportAssignmentType = "none"
