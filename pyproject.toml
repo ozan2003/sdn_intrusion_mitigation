@@ -28,11 +28,7 @@ ryu = { git = "https://github.com/MalachiteN/ryu-python-3.12.git" }
 extra-paths = ["/home/ozan/.local/lib/python3.12/site-packages"]
 
 [dependency-groups]
-dev = [
-    "basedpyright>=1.39.0",
-    "pytest>=9.0.2",
-    "ruff>=0.15.4",
-]
+dev = ["basedpyright>=1.39.0", "pytest>=9.0.2", "ruff>=0.15.4"]
 
 [tool.ruff]
 line-length = 79
@@ -103,6 +99,20 @@ exclude = ["**/stubs/**", "**/__pycache__/**", ".venv"]
 stubPath = "stubs"
 venvPath = "."
 venv = ".venv"
+allowedUntypedLibraries = [
+    "mininet",
+    "ryu",
+    "eventlet",
+    "netaddr",
+    "oslo_config",
+    "routes",
+    "six",
+    "tinyrpc",
+    "webob",
+    "scapy",
+    "networkx",
+    "matplotlib",
+]
 typeCheckingMode = "basic"
 reportAny = false
 reportUnusedCallResult = false
