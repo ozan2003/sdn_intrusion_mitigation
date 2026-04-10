@@ -9,9 +9,10 @@ alert tcp any any -> any any (
 
 # Port scan: >=20 SYN packets (unique dst ports) from a single source
 # within 60 seconds.
-alert tcp any any -> any any ( \
-    msg:"THREAT Port Scan Detected"; \
-    flags:S,12; \
-    threshold:type threshold, track by_src, count 20, seconds 60; \
-    classtype:network-scan; \
-    sid:1000002; rev:1;)
+alert tcp any any -> $HOME_NET any (
+    msg:"THREAT Possible Port Scan";
+    flags:S;
+    flow:stateless;
+    detection_filter:track by_src, count 20, seconds 60;
+    classtype:network-scan;
+    sid:1000002; rev:2;)
