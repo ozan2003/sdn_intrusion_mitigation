@@ -1,10 +1,11 @@
 # SYN flood: >=100 SYN packets from a single source within 10 seconds.
-alert tcp any any -> any any ( \
-    msg:"THREAT SYN Flood Detected"; \
-    flags:S,12; \
-    threshold:type both, track by_src, count 100, seconds 10; \
-    classtype:attempted-dos; \
-    sid:1000001; rev:1;)
+alert tcp any any -> any any (
+    msg:"THREAT SYN Flood Detected";
+    flags:S;
+    flow:stateless;
+    detection_filter:track by_src, count 100, seconds 10;
+    classtype:attempted-dos;
+    sid:1000001; rev:2;)
 
 # Port scan: >=20 SYN packets (unique dst ports) from a single source
 # within 60 seconds.
