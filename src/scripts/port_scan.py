@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Run a TCP SYN port scan from a Mininet host namespace.
 
-Example usage (from the Mininet CLI):
-    mininet> hacker python3 src/scripts/port_scan.py -s 10 -e 50000 10.0.3.10
+Example usage (from the Mininet CLI, project root as cwd):
+    mininet> hacker .venv/bin/python3 src/scripts/port_scan.py 10.0.3.10 -s 10 -e 50000
 """
 
 from __future__ import annotations

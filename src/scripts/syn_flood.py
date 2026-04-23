@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Run a TCP SYN flood from a Mininet host namespace.
 
-Example usage (from the Mininet CLI):
-    mininet> hacker python3 src/scripts/syn_flood.py -d 30 -p 200 10.0.3.10
+Example usage (from the Mininet CLI, project root as cwd):
+    mininet> hacker .venv/bin/python3 src/scripts/syn_flood.py 10.0.3.10 -d 30 -p 200
 """
 
 from __future__ import annotations
