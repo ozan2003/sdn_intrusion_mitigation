@@ -28,6 +28,10 @@ HORIZONTAL_SCAN_SID = 1000005
 ARP_SPOOFING_SID = 1000006
 MAC_FLOODING_SID = 1000007
 SSH_BRUTE_FORCE_SID = 1000008
+# WAF rules
+HTTP_SQLI_URI_SID = 1000009
+HTTP_RATE_ABUSE_SID = 1000010
+WEB_PORT_SCAN_SID = 1000011
 
 
 class MitigationAction(Enum):
@@ -46,6 +50,9 @@ _SID_ACTION_MAP: dict[int, MitigationAction] = {
     ARP_SPOOFING_SID: MitigationAction.DROP,
     MAC_FLOODING_SID: MitigationAction.RATE_LIMIT,
     SSH_BRUTE_FORCE_SID: MitigationAction.DROP,
+    HTTP_SQLI_URI_SID: MitigationAction.DROP,
+    HTTP_RATE_ABUSE_SID: MitigationAction.RATE_LIMIT,
+    WEB_PORT_SCAN_SID: MitigationAction.DROP,
 }
 
 

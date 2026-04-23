@@ -1,67 +1,32 @@
 # SYN flood: >=100 SYN packets from a single source within 10 seconds.
-alert tcp any any -> any any (
-    msg:"THREAT SYN Flood Detected";
-    flags:S;
-    flow:stateless;
-    detection_filter:track by_src, count 100, seconds 10;
-    classtype:attempted-dos;
-    sid:1000001; rev:2;)
+alert tcp any any -> any any (msg:"THREAT SYN Flood Detected"; flags:S; flow:stateless; detection_filter:track by_src, count 100, seconds 10; classtype:attempted-dos; sid:1000001; rev:2;)
 
-# Port scan: >=20 SYN packets (unique dst ports) from a single source
-# within 60 seconds.
-alert tcp any any -> $HOME_NET any (
-    msg:"THREAT Possible Port Scan";
-    flags:S;
-    flow:stateless;
-    detection_filter:track by_src, count 20, seconds 60;
-    classtype:network-scan;
-    sid:1000002; rev:2;)
+# Port scan: >=20 SYN packets from a single source within 60 seconds.
+alert tcp any any -> $HOME_NET any (msg:"THREAT Possible Port Scan"; flags:S; flow:stateless; detection_filter:track by_src, count 20, seconds 60; classtype:network-scan; sid:1000002; rev:2;)
 
 # ICMP flood: >=200 echo requests from a single source within 10 seconds.
-alert icmp any any -> $HOME_NET any (
-    msg:"THREAT ICMP Flood Detected";
-    itype:8;
-    detection_filter:track by_src, count 200, seconds 10;
-    classtype:attempted-dos;
-    sid:1000003; rev:1;)
+alert icmp any any -> $HOME_NET any (msg:"THREAT ICMP Flood Detected"; itype:8; detection_filter:track by_src, count 200, seconds 10; classtype:attempted-dos; sid:1000003; rev:1;)
 
 # UDP flood: >=200 UDP packets from a single source within 10 seconds.
-alert udp any any -> $HOME_NET any (
-    msg:"THREAT UDP Flood Detected";
-    detection_filter:track by_src, count 200, seconds 10;
-    classtype:attempted-dos;
-    sid:1000004; rev:1;)
+alert udp any any -> $HOME_NET any (msg:"THREAT UDP Flood Detected"; detection_filter:track by_src, count 200, seconds 10; classtype:attempted-dos; sid:1000004; rev:1;)
 
 # Horizontal scan: many SYN probes to SSH port across the home network.
-alert tcp any any -> $HOME_NET 22 (
-    msg:"THREAT Possible Horizontal Scan";
-    flags:S;
-    flow:stateless;
-    detection_filter:track by_src, count 30, seconds 60;
-    classtype:network-scan;
-    sid:1000005; rev:1;)
+alert tcp any any -> $HOME_NET 22 (msg:"THREAT Possible Horizontal Scan"; flags:S; flow:stateless; detection_filter:track by_src, count 30, seconds 60; classtype:network-scan; sid:1000005; rev:1;)
 
 # ARP spoofing: repeated unsolicited ARP reply packets from one source.
-alert arp any any -> any any (
-    msg:"THREAT ARP Spoofing Suspected";
-    arp_opcode:2;
-    detection_filter:track by_src, count 20, seconds 30;
-    classtype:attempted-recon;
-    sid:1000006; rev:1;)
+alert arp any any -> any any (msg:"THREAT ARP Spoofing Suspected"; arp_opcode:2; detection_filter:track by_src, count 20, seconds 30; classtype:attempted-recon; sid:1000006; rev:1;)
 
 # MAC flooding pattern: heavy ARP request volume from a single source.
-alert arp any any -> any any (
-    msg:"THREAT Potential MAC Flooding";
-    arp_opcode:1;
-    detection_filter:track by_src, count 120, seconds 10;
-    classtype:attempted-dos;
-    sid:1000007; rev:1;)
+alert arp any any -> any any (msg:"THREAT Potential MAC Flooding"; arp_opcode:1; detection_filter:track by_src, count 120, seconds 10; classtype:attempted-dos; sid:1000007; rev:1;)
 
 # SSH brute-force pattern: repeated SSH connection attempts from one source.
-alert tcp any any -> $HOME_NET 22 (
-    msg:"THREAT SSH Brute Force Pattern";
-    flags:S;
-    flow:stateless;
-    detection_filter:track by_src, count 40, seconds 60;
-    classtype:attempted-admin;
-    sid:1000008; rev:1;)
+alert tcp any any -> $HOME_NET 22 (msg:"THREAT SSH Brute Force Pattern"; flags:S; flow:stateless; detection_filter:track by_src, count 40, seconds 60; classtype:attempted-admin; sid:1000008; rev:1;)
+
+# HTTP SQLi-like pattern: suspicious URI payload fragments from a source.
+alert http any any -> $HTTP_SERVERS $HTTP_PORTS (msg:"THREAT HTTP SQLi Pattern in URI"; flow:to_server,established; http.uri; pcre:"/(\bunion\b.{0,32}\bselect\b|\bor\b.{0,16}[0-9]+\s*=\s*[0-9]+\b|\bdrop\b.{0,16}\btable\b|%27\s*or\s*1=1)/Ui"; classtype:web-application-attack; sid:1000009; rev:1;)
+
+# HTTP request burst: high request-per-second volume to web service.
+alert http any any -> $HTTP_SERVERS $HTTP_PORTS (msg:"THREAT HTTP Request Rate Abuse"; flow:to_server,established; detection_filter:track by_src, count 40, seconds 1; classtype:attempted-dos; sid:1000010; rev:1;)
+
+# Web-port scan: rapid SYN probes against common web service ports.
+alert tcp any any -> $HOME_NET [80,443,8000,8080,8443] (msg:"THREAT Possible Web Port Scan"; flags:S; flow:stateless; detection_filter:track by_src, count 20, seconds 30; classtype:network-scan; sid:1000011; rev:1;)

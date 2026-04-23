@@ -9,12 +9,15 @@ import pytest
 from controller.alert_parser import (
     ARP_SPOOFING_SID,
     HORIZONTAL_SCAN_SID,
+    HTTP_RATE_ABUSE_SID,
+    HTTP_SQLI_URI_SID,
     ICMP_FLOOD_SID,
     MAC_FLOODING_SID,
     PORT_SCAN_SID,
     SSH_BRUTE_FORCE_SID,
     SYN_FLOOD_SID,
     UDP_FLOOD_SID,
+    WEB_PORT_SCAN_SID,
     AlertParser,
     MitigationAction,
 )
@@ -79,6 +82,9 @@ class TestParseAlert:
             (ARP_SPOOFING_SID, MitigationAction.DROP),
             (MAC_FLOODING_SID, MitigationAction.RATE_LIMIT),
             (SSH_BRUTE_FORCE_SID, MitigationAction.DROP),
+            (HTTP_SQLI_URI_SID, MitigationAction.DROP),
+            (HTTP_RATE_ABUSE_SID, MitigationAction.RATE_LIMIT),
+            (WEB_PORT_SCAN_SID, MitigationAction.DROP),
         ],
     )
     def test_extended_sids_map_to_expected_actions(
