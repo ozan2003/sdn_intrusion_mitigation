@@ -12,7 +12,7 @@ import random
 import time
 from ipaddress import IPv4Address
 
-from scapy.all import IP, TCP, send  # type: ignore[import-untyped]
+import scapy.all as scapy  # type: ignore[import-untyped]
 
 FILE_NAME = __file__.split("/")[-1]
 
@@ -49,12 +49,12 @@ def port_scan(
     print(f"[{FILE_NAME}] {target=} ports={start_port}..={end_port}")
 
     for port in range(start_port, end_port + 1):
-        pkt = IP(dst=str(target)) / TCP(
+        pkt = scapy.IP(dst=str(target)) / scapy.TCP(
             sport=random.randint(1024, 65535),  # noqa: S311
             dport=port,
             flags="S",
         )
-        send(pkt, verbose=False)
+        scapy.send(pkt, verbose=False)
         time.sleep(0.01)
 
     total = end_port - start_port + 1

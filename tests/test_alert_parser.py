@@ -4,7 +4,20 @@ from __future__ import annotations
 
 import json
 
-from controller.alert_parser import AlertParser, MitigationAction
+import pytest
+
+from controller.alert_parser import (
+    ARP_SPOOFING_SID,
+    HORIZONTAL_SCAN_SID,
+    ICMP_FLOOD_SID,
+    MAC_FLOODING_SID,
+    PORT_SCAN_SID,
+    SSH_BRUTE_FORCE_SID,
+    SYN_FLOOD_SID,
+    UDP_FLOOD_SID,
+    AlertParser,
+    MitigationAction,
+)
 
 
 def _eve_line(
@@ -37,25 +50,46 @@ def _eve_line(
 
 class TestParseAlert:
     def test_syn_flood_alert_yields_rate_limit(self):
-        line = _eve_line(sid=1000001)
+        line = _eve_line(sid=SYN_FLOOD_SID)
         alert = AlertParser._parse(line)
 
         assert alert is not None
         assert alert.action == MitigationAction.RATE_LIMIT
         assert alert.src_ip == "10.0.1.10"
         assert alert.dst_ip == "10.0.3.10"
-        assert alert.signature_id == 1000001
+        assert alert.signature_id == SYN_FLOOD_SID
 
     def test_port_scan_alert_yields_drop(self):
         line = _eve_line(
-            sid=1000002,
+            sid=PORT_SCAN_SID,
             signature="THREAT Port Scan Detected",
         )
         alert = AlertParser._parse(line)
 
         assert alert is not None
         assert alert.action == MitigationAction.DROP
-        assert alert.signature_id == 1000002
+        assert alert.signature_id == PORT_SCAN_SID
+
+    @pytest.mark.parametrize(
+        ("sid", "action"),
+        [
+            (ICMP_FLOOD_SID, MitigationAction.RATE_LIMIT),
+            (UDP_FLOOD_SID, MitigationAction.RATE_LIMIT),
+            (HORIZONTAL_SCAN_SID, MitigationAction.DROP),
+            (ARP_SPOOFING_SID, MitigationAction.DROP),
+            (MAC_FLOODING_SID, MitigationAction.RATE_LIMIT),
+            (SSH_BRUTE_FORCE_SID, MitigationAction.DROP),
+        ],
+    )
+    def test_extended_sids_map_to_expected_actions(
+        self, sid: int, action: MitigationAction
+    ):
+        line = _eve_line(sid=sid, signature=f"sid-{sid}")
+        alert = AlertParser._parse(line)
+
+        assert alert is not None
+        assert alert.signature_id == sid
+        assert alert.action == action
 
     def test_unknown_sid_returns_none(self):
         line = _eve_line(sid=9999999, signature="Unknown rule")

@@ -77,6 +77,24 @@ mininet> hacker .venv/bin/python3 src/scripts/syn_flood.py 10.0.3.10 -d 30 -p 20
 
 # Port scan (ports 1-1024)
 mininet> hacker .venv/bin/python3 src/scripts/port_scan.py 10.0.3.10 -s 1 -e 1024
+
+# ICMP flood (200 pps for 30 seconds)
+mininet> hacker .venv/bin/python3 src/scripts/icmp_flood.py 10.0.3.10 -d 30 -p 200
+
+# UDP flood to DNS port 53 (200 pps for 30 seconds)
+mininet> hacker .venv/bin/python3 src/scripts/udp_flood.py 10.0.3.10 -P 53 -d 30 -p 200
+
+# Horizontal scan (one port, many hosts)
+mininet> hacker .venv/bin/python3 src/scripts/horizontal_scan.py -P 22 10.0.3.10 10.0.3.20 10.0.3.30
+
+# ARP spoofing pattern (provide live victim MAC addresses from Mininet)
+mininet> hacker .venv/bin/python3 src/scripts/arp_spoof.py --victim-a-ip 10.0.3.10 --victim-a-mac <MAC_A> --victim-b-ip 10.0.3.20 --victim-b-mac <MAC_B> -d 30 -p 10
+
+# MAC flooding pattern (ARP-broadcast heavy)
+mininet> hacker .venv/bin/python3 src/scripts/mac_flood.py -i hacker-eth0 -T 10.0.3.10 -d 30 -p 500
+
+# SSH brute-force traffic-pattern stub (repeated TCP connect attempts only)
+mininet> hacker .venv/bin/python3 src/scripts/ssh_bruteforce_stub.py 10.0.3.10 -a 200 -r 10
 ```
 
 Within seconds, Suricata writes an alert to `logs/eve.json`, the Ryu

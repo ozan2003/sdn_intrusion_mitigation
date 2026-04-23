@@ -22,6 +22,12 @@ _hub = cast(Any, hub)
 # Custom Suricata signature IDs defined in ids/rules/custom.rules.
 SYN_FLOOD_SID = 1000001
 PORT_SCAN_SID = 1000002
+ICMP_FLOOD_SID = 1000003
+UDP_FLOOD_SID = 1000004
+HORIZONTAL_SCAN_SID = 1000005
+ARP_SPOOFING_SID = 1000006
+MAC_FLOODING_SID = 1000007
+SSH_BRUTE_FORCE_SID = 1000008
 
 
 class MitigationAction(Enum):
@@ -34,6 +40,12 @@ class MitigationAction(Enum):
 _SID_ACTION_MAP: dict[int, MitigationAction] = {
     SYN_FLOOD_SID: MitigationAction.RATE_LIMIT,
     PORT_SCAN_SID: MitigationAction.DROP,
+    ICMP_FLOOD_SID: MitigationAction.RATE_LIMIT,
+    UDP_FLOOD_SID: MitigationAction.RATE_LIMIT,
+    HORIZONTAL_SCAN_SID: MitigationAction.DROP,
+    ARP_SPOOFING_SID: MitigationAction.DROP,
+    MAC_FLOODING_SID: MitigationAction.RATE_LIMIT,
+    SSH_BRUTE_FORCE_SID: MitigationAction.DROP,
 }
 
 
