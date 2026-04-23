@@ -62,8 +62,8 @@ def mac_flood(
     sent_frames = 0
 
     print(
-        f"[{FILE_NAME}] interface={interface} dst_mac={target_mac} "
-        f"target_ip={target_ip} {duration=}s {pps=}"
+        f"[{FILE_NAME}] {interface=} {target_mac=} "
+        f"{target_ip=} {duration=}s {pps=}"
     )
 
     while time.monotonic() < end_time:
@@ -85,7 +85,8 @@ def mac_flood(
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate MAC flooding traffic for SDN threat detection demo."
+        description="Generate MAC flooding traffic.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-i",
@@ -99,28 +100,28 @@ def _build_parser() -> argparse.ArgumentParser:
         "--target-mac",
         type=str,
         default=DEFAULT_TARGET_MAC,
-        help="Destination MAC address (default: %(default)s)",
+        help="Destination MAC address",
     )
     parser.add_argument(
         "-T",
         "--target-ip",
         type=IPv4Address,
         default=DEFAULT_TARGET_IP,
-        help="Destination IP used in ARP probes (default: %(default)s)",
+        help="Destination IP used in ARP probes",
     )
     parser.add_argument(
         "-d",
         "--duration",
         type=int,
         default=DEFAULT_MAC_FLOOD_DURATION,
-        help="Flood duration in seconds (default: %(default)s)",
+        help="Flood duration in seconds",
     )
     parser.add_argument(
         "-p",
         "--pps",
         type=int,
         default=DEFAULT_MAC_FLOOD_PPS,
-        help="Frames per second (default: %(default)s)",
+        help="Frames per second",
     )
     return parser
 

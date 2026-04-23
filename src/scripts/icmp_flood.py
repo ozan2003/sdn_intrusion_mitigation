@@ -44,7 +44,7 @@ def icmp_flood(
     end_time = time.monotonic() + duration
     sent_packets = 0
 
-    print(f"[{FILE_NAME}] target={target} {duration=}s {pps=}")
+    print(f"[{FILE_NAME}] {target=} {duration=}s {pps=}")
 
     while time.monotonic() < end_time:
         packet = scapy.IP(dst=str(target)) / scapy.ICMP(type="echo-request")
@@ -57,7 +57,8 @@ def icmp_flood(
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate ICMP flood traffic for SDN threat detection demo."
+        description="Generate ICMP flood traffic.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("target", type=IPv4Address, help="Target IPv4 address")
     parser.add_argument(
@@ -65,14 +66,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "--duration",
         type=int,
         default=DEFAULT_ICMP_FLOOD_DURATION,
-        help="Flood duration in seconds (default: %(default)s)",
+        help="Flood duration in seconds",
     )
     parser.add_argument(
         "-p",
         "--pps",
         type=int,
         default=DEFAULT_ICMP_FLOOD_PPS,
-        help="Packets per second (default: %(default)s)",
+        help="Packets per second",
     )
     return parser
 

@@ -59,8 +59,8 @@ def ssh_bruteforce_stub(
     failed_connects = 0
 
     print(
-        f"[{FILE_NAME}] target={target} dport={destination_port} "
-        f"{attempts=} attempts_per_second={attempts_per_second}"
+        f"[{FILE_NAME}] {target=} dport={destination_port} "
+        f"{attempts=} {attempts_per_second=}"
     )
 
     for _ in range(attempts):
@@ -74,14 +74,15 @@ def ssh_bruteforce_stub(
         time.sleep(interval)
 
     print(
-        f"[{FILE_NAME}] done - attempts={attempts} "
-        f"successful_connects={successful_connects} failed_connects={failed_connects}"
+        f"[{FILE_NAME}] done - {attempts=} "
+        f"{successful_connects=} {failed_connects=}"
     )
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate SSH brute-force traffic pattern for SDN detection demo."
+        description="Generate SSH brute-force traffic pattern for SDN detection demo.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("target", type=IPv4Address, help="Target IPv4 address")
     parser.add_argument(
@@ -89,28 +90,28 @@ def _build_parser() -> argparse.ArgumentParser:
         "--destination-port",
         type=int,
         default=DEFAULT_SSH_PORT,
-        help="Destination TCP port (default: %(default)s)",
+        help="Destination TCP port",
     )
     parser.add_argument(
         "-a",
         "--attempts",
         type=int,
         default=DEFAULT_ATTEMPTS,
-        help="Total connection attempts (default: %(default)s)",
+        help="Total connection attempts",
     )
     parser.add_argument(
         "-r",
         "--attempts-per-second",
         type=int,
         default=DEFAULT_ATTEMPTS_PER_SECOND,
-        help="Connection attempts per second (default: %(default)s)",
+        help="Connection attempts per second",
     )
     parser.add_argument(
         "-t",
         "--connect-timeout",
         type=float,
         default=DEFAULT_CONNECT_TIMEOUT_SECONDS,
-        help="Connection timeout in seconds (default: %(default)s)",
+        help="Connection timeout in seconds",
     )
     return parser
 

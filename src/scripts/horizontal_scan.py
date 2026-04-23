@@ -46,7 +46,7 @@ def horizontal_scan(
 
     print(
         f"[{FILE_NAME}] hosts={len(targets)} dport={destination_port} "
-        f"probe_interval_seconds={probe_interval_seconds}"
+        f"{probe_interval_seconds=}"
     )
 
     for target in targets:
@@ -68,7 +68,8 @@ def _parse_target_network(network: str) -> list[IPv4Address]:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate horizontal scan traffic for SDN threat detection demo."
+        description="Generate horizontal scan traffic.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "targets",
@@ -88,14 +89,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "--destination-port",
         type=int,
         default=DEFAULT_SCAN_PORT,
-        help="Destination TCP port (default: %(default)s)",
+        help="Destination TCP port",
     )
     parser.add_argument(
         "-i",
         "--probe-interval",
         type=float,
         default=DEFAULT_PROBE_INTERVAL_SECONDS,
-        help="Delay between probes in seconds (default: %(default)s)",
+        help="Delay between probes in seconds",
     )
     return parser
 

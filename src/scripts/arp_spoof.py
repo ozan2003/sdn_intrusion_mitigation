@@ -82,27 +82,32 @@ def arp_spoof(
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate ARP spoofing traffic for SDN threat detection demo."
+        description="Generate ARP spoofing traffic.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
+        "-vai",
         "--victim-a-ip",
         required=True,
         type=IPv4Address,
         help="First victim IPv4 address",
     )
     parser.add_argument(
+        "-vam",
         "--victim-a-mac",
         required=True,
         type=str,
         help="First victim MAC address",
     )
     parser.add_argument(
+        "-vbi",
         "--victim-b-ip",
         required=True,
         type=IPv4Address,
         help="Second victim IPv4 address",
     )
     parser.add_argument(
+        "-vbm",
         "--victim-b-mac",
         required=True,
         type=str,
@@ -113,14 +118,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "--duration",
         type=int,
         default=DEFAULT_ARP_SPOOF_DURATION,
-        help="Spoof duration in seconds (default: %(default)s)",
+        help="Spoof duration in seconds",
     )
     parser.add_argument(
         "-p",
         "--pps",
         type=int,
         default=DEFAULT_ARP_SPOOF_PPS,
-        help="ARP reply pairs per second (default: %(default)s)",
+        help="ARP reply pairs per second",
     )
     parser.add_argument(
         "-i",

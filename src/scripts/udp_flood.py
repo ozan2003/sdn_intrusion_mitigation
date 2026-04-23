@@ -58,8 +58,8 @@ def udp_flood(
     sent_packets = 0
 
     print(
-        f"[{FILE_NAME}] target={target} dport={destination_port} "
-        f"{duration=}s {pps=} payload_size={payload_size}"
+        f"[{FILE_NAME}] {target=} dport={destination_port} "
+        f"{duration=}s {pps=} {payload_size=}"
     )
 
     while time.monotonic() < end_time:
@@ -77,7 +77,8 @@ def udp_flood(
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate UDP flood traffic for SDN threat detection demo."
+        description="Generate UDP flood traffic.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("target", type=IPv4Address, help="Target IPv4 address")
     parser.add_argument(
@@ -85,28 +86,28 @@ def _build_parser() -> argparse.ArgumentParser:
         "--destination-port",
         type=int,
         default=DEFAULT_UDP_DPORT,
-        help="Destination UDP port (default: %(default)s)",
+        help="Destination UDP port",
     )
     parser.add_argument(
         "-d",
         "--duration",
         type=int,
         default=DEFAULT_UDP_FLOOD_DURATION,
-        help="Flood duration in seconds (default: %(default)s)",
+        help="Flood duration in seconds",
     )
     parser.add_argument(
         "-p",
         "--pps",
         type=int,
         default=DEFAULT_UDP_FLOOD_PPS,
-        help="Packets per second (default: %(default)s)",
+        help="Packets per second",
     )
     parser.add_argument(
         "-s",
         "--payload-size",
         type=int,
         default=DEFAULT_UDP_PAYLOAD_SIZE,
-        help="UDP payload size in bytes (default: %(default)s)",
+        help="UDP payload size in bytes",
     )
     return parser
 

@@ -63,7 +63,8 @@ def port_scan(
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate TCP SYN port-scan traffic for SDN threat detection demo."
+        description="Generate TCP SYN port-scan traffic.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("target", type=IPv4Address, help="Target IPv4 address")
     parser.add_argument(
@@ -71,14 +72,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "--start-port",
         type=int,
         default=DEFAULT_SCAN_PORT_START,
-        help="First port to scan (default: %(default)s)",
+        help="First port to scan",
     )
     parser.add_argument(
         "-e",
         "--end-port",
         type=int,
         default=DEFAULT_SCAN_PORT_END,
-        help="Last port to scan (default: %(default)s)",
+        help="Last port to scan",
     )
     return parser
 
