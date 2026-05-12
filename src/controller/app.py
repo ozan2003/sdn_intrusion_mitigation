@@ -345,9 +345,7 @@ class ThreatMitigationApp(app_manager.RyuApp):
         )
 
         if alert.signature_id in (ARP_SPOOFING_SID, MAC_FLOODING_SID):
-            self.flow_manager.install_drop_arp(
-                dp, vlan_vid=VLAN_INTERNET
-            )
+            self.flow_manager.install_drop_arp(dp, vlan_vid=VLAN_INTERNET)
         elif alert.action == MitigationAction.DROP:
             self.flow_manager.install_drop_rule(
                 dp, alert.src_ip, vlan_vid=VLAN_INTERNET

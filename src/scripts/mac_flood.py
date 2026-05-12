@@ -1,8 +1,25 @@
 #!/usr/bin/env python3
-"""Run a MAC flooding pattern from a Mininet host namespace.
+"""Generate MAC-churn ARP traffic (Mininet lab only).
 
-Example usage (from the Mininet CLI):
-    mininet> hacker .venv/bin/python3 src/scripts/mac_flood.py -i hacker-eth0 -d 30 -p 500
+Sends ARP request frames with randomized source MAC addresses.
+
+It has two functions:
+    - L2: many source MACs stress learning/MAC-table behavior.
+    - SDN: lots of first-seen traffic can hit the table-miss rule and generate
+      `PACKET_IN` messages to the controller.
+
+Two demo modes:
+    1) Control-plane pressure (default broadcast destination MAC):
+       mininet> hacker .venv/bin/python3 src/scripts/mac_flood.py -i hacker-eth0 -d 20 -p 80
+
+    2) Flow-table pressure (unicast destination MAC of a real host):
+       mininet> intra ip link show intra-eth0
+       mininet> hacker .venv/bin/python3 src/scripts/mac_flood.py -i hacker-eth0 -m <INTRA_MAC> -T 10.0.3.10 -d 20 -p 80
+
+What you should observe:
+    Suricata may alert on sid 1000007; the controller mitigates by installing a
+    high-priority ARP drop on the attacker zone (Internet VLAN). After that,
+    ARP-driven `PACKET_IN` pressure and learning-flow growth should stop.
 """
 
 from __future__ import annotations

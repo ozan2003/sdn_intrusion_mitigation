@@ -1,8 +1,12 @@
-"""
-Mininet implementation of the enterprise WAN topology.
+"""Mininet implementation of the enterprise WAN topology.
 
-Its comprised of 4 OVS switches (OpenFlow 1.3), 8 hosts, VLAN-tagged zones on the
-backbone switch (s1_omurga), and an OVS mirror port for Suricata.
+This lab is used to demonstrate IDS-driven SDN mitigation.
+
+Key properties (relevant for the SDN-plane demos):
+- `s1_omurga` is the backbone/choke-point switch (OpenFlow 1.3, dpid=1).
+- The attacker host `hacker` connects to `s1_omurga` on the Internet VLAN (15).
+- An OVS mirror port (`mirror0`) is created on `s1_omurga` and used by Suricata
+    for passive inspection. Suricata does not sit inline, it only logs alerts.
 """
 
 from __future__ import annotations
