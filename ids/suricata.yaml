@@ -55,6 +55,8 @@ app-layer:
       enabled: yes
     ssh:
       enabled: yes
+    arp:
+      detection-enabled: yes
 
 logging:
   default-log-level: info

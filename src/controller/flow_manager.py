@@ -90,6 +90,35 @@ class FlowManager:
             hard_timeout,
         )
 
+    def install_drop_arp(
+        self,
+        datapath: Datapath,
+        *,
+        hard_timeout: int = DEFAULT_HARD_TIMEOUT,
+        vlan_vid: int | None = None,
+    ) -> None:
+        """Drops ARP traffic, optionally scoped to a specific VLAN."""
+        match_fields: dict[str, Any] = {
+            "eth_type": 0x0806,
+        }
+        if vlan_vid is not None:
+            match_fields["vlan_vid"] = vlan_vid | ofproto13.OFPVID_PRESENT
+
+        match = parser13.OFPMatch(**match_fields)
+        self.add_flow(
+            datapath,
+            priority=MITIGATION_PRIORITY,
+            match=match,
+            instructions=[],
+            hard_timeout=hard_timeout,
+        )
+        LOG.warning(
+            "DROP ARP rule installed on dpid=%s (vlan=%s, timeout=%ds)",
+            datapath.id,
+            vlan_vid,
+            hard_timeout,
+        )
+
     def install_rate_limit(
         self,
         datapath: Datapath,

@@ -50,6 +50,34 @@ class TestInstallDropRule:
         )
 
 
+class TestInstallDropArp:
+    def test_sends_flow_mod_with_arp_eth_type(self):
+        dp = _make_datapath()
+        fm = FlowManager()
+
+        fm.install_drop_arp(dp)
+
+        dp.send_msg.assert_called_once()
+        msg = dp.send_msg.call_args[0][0]
+        assert isinstance(msg, parser13.OFPFlowMod)
+        assert msg.priority == MITIGATION_PRIORITY
+
+        match_dict = dict(msg.match._fields2)
+        assert match_dict.get("eth_type") == 0x0806
+
+    def test_match_includes_vlan_when_specified(self):
+        dp = _make_datapath()
+        fm = FlowManager()
+
+        fm.install_drop_arp(dp, vlan_vid=15)
+
+        msg = dp.send_msg.call_args[0][0]
+        match_dict = dict(msg.match._fields2)
+        assert ("vlan_vid", 15 | ofproto13.OFPVID_PRESENT) in (
+            match_dict.items()
+        )
+
+
 class TestInstallRateLimit:
     def test_sends_meter_mod_then_flow_mod(self):
         dp = _make_datapath()

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from ipaddress import IPv4Address
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
@@ -20,7 +19,12 @@ from ryu.lib.packet import ether_types, ethernet, packet, vlan
 from ryu.ofproto import ofproto_v1_3 as ofproto13
 from ryu.ofproto import ofproto_v1_3_parser as parser13
 
-from controller.alert_parser import AlertParser, MitigationAction
+from controller.alert_parser import (
+    ARP_SPOOFING_SID,
+    MAC_FLOODING_SID,
+    AlertParser,
+    MitigationAction,
+)
 from controller.flow_manager import DEFAULT_HARD_TIMEOUT, FlowManager
 
 if TYPE_CHECKING:
@@ -61,7 +65,7 @@ class ThreatMitigationApp(app_manager.RyuApp):
         self.datapaths: dict[int, Datapath] = {}
         self.flow_manager = FlowManager()
         self.alert_parser = AlertParser(EVE_JSON_PATH)
-        self._mitigated: set[IPv4Address] = set()
+        self._mitigated: set[object] = set()
         self._alert_thread = HUB_SPAWN(self._watch_alerts)
 
     @set_ev_cls(EVENT_SWITCH_FEATURES, CONFIG_DISPATCHER)
@@ -315,7 +319,13 @@ class ThreatMitigationApp(app_manager.RyuApp):
         Duplicate alerts for an already-mitigated source are ignored until
         the mitigation timeout elapses and `_clear_mitigation` runs.
         """
-        if alert.src_ip in self._mitigated:
+        mitigation_key: object
+        if alert.signature_id in (ARP_SPOOFING_SID, MAC_FLOODING_SID):
+            mitigation_key = ("drop_arp_vlan", VLAN_INTERNET)
+        else:
+            mitigation_key = alert.src_ip
+
+        if mitigation_key in self._mitigated:
             return
 
         dp = self.datapaths.get(OMURGA_DPID)
@@ -334,7 +344,11 @@ class ThreatMitigationApp(app_manager.RyuApp):
             alert.signature_id,
         )
 
-        if alert.action == MitigationAction.DROP:
+        if alert.signature_id in (ARP_SPOOFING_SID, MAC_FLOODING_SID):
+            self.flow_manager.install_drop_arp(
+                dp, vlan_vid=VLAN_INTERNET
+            )
+        elif alert.action == MitigationAction.DROP:
             self.flow_manager.install_drop_rule(
                 dp, alert.src_ip, vlan_vid=VLAN_INTERNET
             )
@@ -343,20 +357,21 @@ class ThreatMitigationApp(app_manager.RyuApp):
                 dp, alert.src_ip, vlan_vid=VLAN_INTERNET
             )
 
-        self._mitigated.add(alert.src_ip)
+        self._mitigated.add(mitigation_key)
         # Schedule cleanup aligned with the flow's hard_timeout so the
         # IP becomes eligible for re-mitigation once the OVS rule expires.
         HUB_SPAWN_AFTER(
-            DEFAULT_HARD_TIMEOUT, self._clear_mitigation, alert.src_ip
+            DEFAULT_HARD_TIMEOUT, self._clear_mitigation, mitigation_key
         )
 
-    def _clear_mitigation(self, src_ip: IPv4Address) -> None:
-        """Remove *src_ip* from the mitigated set after the rule expires.
+    def _clear_mitigation(self, mitigation_key: object) -> None:
+        """Remove *mitigation_key* from the mitigated set after the rule expires.
 
         If the attacker is still active, Suricata will fire a new alert
         and a fresh rule will be installed on the next callback cycle.
         """
-        self._mitigated.discard(src_ip)
+        self._mitigated.discard(mitigation_key)
         LOG.info(
-            "Mitigation expired for %s; will re-trigger on new alert", src_ip
+            "Mitigation expired for %s; will re-trigger on new alert",
+            mitigation_key,
         )

@@ -2,9 +2,7 @@
 """Run a controlled ARP spoofing traffic pattern from a Mininet host.
 
 Example usage (from the Mininet CLI):
-    mininet> hacker .venv/bin/python3 src/scripts/arp_spoof.py \
-        --victim-a-ip 10.0.3.10 --victim-a-mac 00:00:00:00:03:10 \
-        --victim-b-ip 10.0.3.20 --victim-b-mac 00:00:00:00:03:20 -d 30 -p 10
+    mininet> hacker .venv/bin/python3 src/scripts/arp_spoof.py --victim-a-ip 10.0.3.10 --victim-a-mac 00:00:00:00:03:10 --victim-b-ip 10.0.3.20 --victim-b-mac 00:00:00:00:03:20 -d 30 -p 10
 """
 
 from __future__ import annotations

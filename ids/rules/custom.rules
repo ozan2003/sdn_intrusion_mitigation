@@ -17,7 +17,7 @@ alert tcp any any -> $HOME_NET 22 (msg:"THREAT Possible Horizontal Scan"; flags:
 alert arp any any -> any any (msg:"THREAT ARP Spoofing Suspected"; arp_opcode:2; detection_filter:track by_src, count 20, seconds 30; classtype:attempted-recon; sid:1000006; rev:1;)
 
 # MAC flooding pattern: heavy ARP request volume from a single source.
-alert arp any any -> any any (msg:"THREAT Potential MAC Flooding"; arp_opcode:1; detection_filter:track by_src, count 120, seconds 10; classtype:attempted-dos; sid:1000007; rev:1;)
+alert arp any any -> any any (msg:"THREAT Potential MAC Flooding"; arp_opcode:1; detection_filter:track by_dst, count 120, seconds 10; classtype:attempted-dos; sid:1000007; rev:1;)
 
 # SSH brute-force pattern: repeated SSH connection attempts from one source.
 alert tcp any any -> $HOME_NET 22 (msg:"THREAT SSH Brute Force Pattern"; flags:S; flow:stateless; detection_filter:track by_src, count 40, seconds 60; classtype:attempted-admin; sid:1000008; rev:1;)
