@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Generate MAC-churn ARP traffic (Mininet lab only).
+"""Generate MAC-churn ARP traffic.
 
 Sends ARP request frames with randomized source MAC addresses.
 
 It has two functions:
-    - L2: many source MACs stress learning/MAC-table behavior.
+    - L2: many source MACs stress learning/CAM-table behavior.
     - SDN: lots of first-seen traffic can hit the table-miss rule and generate
-      `PACKET_IN` messages to the controller.
+      `PACKET_IN` messages to the controller, which can cause CPU exhaustion and/or flow-table growth.
 
 Two demo modes:
     1) Control-plane pressure (default broadcast destination MAC):
@@ -42,12 +42,12 @@ DEFAULT_TARGET_IP = IPv4Address("10.0.3.10")
 
 def _random_mac_address() -> str:
     octets = [0x02]
-    octets.extend(random.randint(0x00, 0xFF) for _ in range(5))  # noqa: S311
+    octets.extend(random.randint(0x00, 0xFF) for _ in range(5))
     return ":".join(f"{octet:02x}" for octet in octets)
 
 
 def _random_source_ip() -> str:
-    return f"172.16.{random.randint(0, 255)}.{random.randint(1, 254)}"  # noqa: S311
+    return f"172.16.{random.randint(0, 255)}.{random.randint(1, 254)}"
 
 
 def mac_flood(
