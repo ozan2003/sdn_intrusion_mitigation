@@ -50,7 +50,7 @@ def port_scan(
 
     for port in range(start_port, end_port + 1):
         pkt = scapy.IP(dst=str(target)) / scapy.TCP(
-            sport=random.randint(1024, 65535),  # noqa: S311
+            sport=random.randint(1024, 65535),
             dport=port,
             flags="S",
         )

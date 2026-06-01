@@ -51,7 +51,7 @@ def horizontal_scan(
 
     for target in targets:
         packet = scapy.IP(dst=str(target)) / scapy.TCP(
-            sport=random.randint(1024, 65535),  # noqa: S311
+            sport=random.randint(1024, 65535),
             dport=destination_port,
             flags="S",
         )
