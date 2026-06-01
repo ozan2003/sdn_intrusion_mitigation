@@ -92,7 +92,7 @@ mininet> hacker .venv/bin/python3 src/scripts/arp_spoof.py --victim-a-ip 10.0.3.
 ```
 
 > [!Note]  
-> The mininet topology is created with `autoSetMacs=True`, so must provide live victim MAC addresses from Mininet CLI output.
+> The mininet topology is created with `autoSetMacs=True`, so you must provide live victim MAC addresses from Mininet CLI output.
 
 ```bash
 # MAC flooding pattern (ARP heavy)
