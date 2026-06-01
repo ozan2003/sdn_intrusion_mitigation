@@ -87,9 +87,14 @@ mininet> hacker .venv/bin/python3 src/scripts/udp_flood.py 10.0.3.10 -P 53 -d 30
 # Horizontal scan (one port, many hosts)
 mininet> hacker .venv/bin/python3 src/scripts/horizontal_scan.py -P 22 10.0.3.10 10.0.3.20 10.0.3.30
 
-# ARP spoofing pattern (provide live victim MAC addresses from Mininet)
+# ARP spoofing pattern
 mininet> hacker .venv/bin/python3 src/scripts/arp_spoof.py --victim-a-ip 10.0.3.10 --victim-a-mac <MAC_A> --victim-b-ip 10.0.3.20 --victim-b-mac <MAC_B> -d 30 -p 10
+```
 
+> [!Note]  
+> The mininet topology is created with `autoSetMacs=True`, so must provide live victim MAC addresses from Mininet CLI output.
+
+```bash
 # MAC flooding pattern (ARP heavy)
 mininet> hacker .venv/bin/python3 src/scripts/mac_flood.py -i hacker-eth0 -T 10.0.3.10 -d 30 -p 500
 
