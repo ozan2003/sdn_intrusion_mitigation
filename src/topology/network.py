@@ -179,9 +179,12 @@ def display_network_topo(graph: nx.Graph) -> None:
 
 
 def setup_mirror_and_vlans(net: Mininet) -> None:
-    """Configure OVS port mirroring and VLAN access tags on s1_omurga."""
+    """Configure OVS port mirroring and VLAN access tags on s1_omurga.
+
+    Port mirroring allows Suricata to inspect traffic without being inline.
+    """
     _run(
-        "ovs-vsctl add-port s1_omurga mirror0 "
+        "ovs-vsctl add-port s1_omurga mirror0 "  # mirror0 is the port Suricata listens on
         "-- set Interface mirror0 type=internal"
     )
     mirror0_ofport = _get_ofport("mirror0")
@@ -189,13 +192,13 @@ def setup_mirror_and_vlans(net: Mininet) -> None:
         "ovs-vsctl "
         "-- --id=@p get Port mirror0 "
         "-- --id=@m create Mirror name=m0 "
-        "select_all=true output-port=@p "
+        "select_all=true output-port=@p "  # copy all traffic passing through s1_omurga
         "-- set Bridge s1_omurga mirrors=@m"
     )
     _run("ip link set mirror0 up")
 
     vlan_map: dict[str, int] = {
-        "hacker": VLAN_INTERNET,  # Assumed hacker connects to Internet VLAN
+        "hacker": VLAN_INTERNET,  # Assume the hacker connects to Internet VLAN
         "s2_sube": VLAN_BRANCH,
         "s4_merkez": VLAN_HQ,
     }
