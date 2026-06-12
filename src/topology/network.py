@@ -27,6 +27,8 @@ from mininet.net import Mininet
 from mininet.node import OVSKernelSwitch, RemoteController
 from mininet.topo import Topo
 
+from controller.app import VLAN_BRANCH, VLAN_HQ, VLAN_INTERNET
+
 FILE_NAME = __file__.split("/")[-1]
 
 # DPID expected by controller.app for backbone specific forwarding logic.
@@ -193,9 +195,9 @@ def setup_mirror_and_vlans(net: Mininet) -> None:
     _run("ip link set mirror0 up")
 
     vlan_map: dict[str, int] = {
-        "hacker": 15,
-        "s2_sube": 5,
-        "s4_merkez": 10,
+        "hacker": VLAN_INTERNET,  # Assumed hacker connects to Internet VLAN
+        "s2_sube": VLAN_BRANCH,
+        "s4_merkez": VLAN_HQ,
     }
     for peer, vlan_id in vlan_map.items():
         port_name = _peer_port_name(net, "s1_omurga", peer)
